@@ -70,12 +70,17 @@ The preferred guided sequence is:
 identity → model → installation → operation → element type → element reference → problem description
 
 Slot semantics are distinct:
+- identity = the operator's name and surname;
 - model = the caller's model/platform reference;
 - installation = the caller's installation/equipment-location reference;
 - operation = the caller's operation/station/process identifier or reference;
 - element type = what kind of physical element is affected, for example robot, motor, flange, clamp or another equipment type;
 - element reference = the exact identifier/reference of that element, for example a synthetic value such as ST12;
 - problem description = what failed, what stopped, symptoms or observed behavior.
+
+Identity is complete only when both a name and at least one surname are present.
+If the caller provides only a first name or only a surname, ask only for the missing identity part before moving to model.
+Never infer or invent the missing name or surname.
 
 After learning the element type, adapt the next question naturally to that element.
 Examples:
