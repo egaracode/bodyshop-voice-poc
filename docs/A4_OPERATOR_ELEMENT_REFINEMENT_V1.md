@@ -1,0 +1,112 @@
+# A4 Operator Element Refinement V1
+
+## 1. Status
+
+```text
+A4_OPERATOR_ELEMENT_REFINEMENT: ACCEPTED_BY_ALBERT
+DATE: 2026-09-04
+```
+
+This document records the A4 product refinement discovered during live ElevenLabs sandbox testing.
+
+It does not authorize SQL, Supabase, AI-Control-Workshop changes, production persistence, real operational data, or any state-changing integration.
+
+## 2. Accepted operator sequence
+
+AI Control should guide the operator through this preferred sequence:
+
+```text
+identity (name + at least one surname)
+→ model
+→ installation
+→ operation
+→ element type
+→ element reference
+→ problem description
+```
+
+The conversation remains guided and bounded. Asking the fields one by one is preferred because it reduces ambiguity and helps preserve data quality.
+
+If the operator spontaneously supplies several clear fields in one utterance, AI Control should retain them and ask only for what is still missing or uncertain.
+
+## 3. Element semantics
+
+`element_type` answers what kind of physical element is affected, for example robot, motor, brida or pinza.
+
+`element_ref` answers which exact element is affected, using a synthetic reference such as `ST12` in public tests.
+
+AI Control must not collapse `element_type` and `element_ref` into one slot when the exact element is still unresolved.
+
+After learning the element type, the next question should adapt naturally, for example `¿Qué robot es?`, `¿Qué motor es?`, `¿Qué brida es?` or `¿Qué pinza es?`.
+
+## 4. Slot boundary
+
+The operator slots are distinct:
+
+```text
+identity
+model
+installation
+operation
+element_type
+element_ref
+problem_description
+```
+
+Identity is complete only when name + at least one surname are present.
+
+A problem narrative must not silently satisfy `operation`; an activity description must not silently satisfy `operation`; an operation-like value must not silently satisfy `installation`; a generic element type must not silently satisfy the exact element reference; ambiguous cross-slot answers require focused clarification rather than guessing.
+
+An unclear value must not be described as probably belonging to another slot before clarification.
+
+## 5. Conceptual persistence hierarchy
+
+The conversational data should be compatible with the future conceptual workshop hierarchy:
+
+```text
+MODEL
+└─ INSTALLATION
+   └─ OPERATION
+      └─ ELEMENT
+         ├─ type
+         ├─ reference
+         └─ problem
+```
+
+This is a conversational/domain requirement only. It is not evidence of an existing SQL schema and does not authorize SQL or persistence changes.
+
+## 6. ElevenLabs state handling
+
+`element_type` and `element_ref` are collected during the conversation and do not need to be custom dynamic variables for A4.
+
+ElevenLabs dynamic variables are used here only for context injected into the session, such as channel mode, caller role and already-known external context.
+
+The operator-provided element type/reference may remain in ordinary conversation context during A4 testing.
+
+A future implementation may choose a structured state mechanism or post-conversation data extraction if machine-readable persistence is required, but that is not authorized or required by this A4 refinement.
+
+No real element identifiers may be committed to this public repository.
+
+## 7. Contract impact
+
+Merged A2 currently defines the earlier minimum operator sequence `identity → model → installation → operation → problem description` and merged A3 `OP-02` / `OP-03` currently verify that earlier field set.
+
+Albert's accepted A4 refinement adds identity completeness plus `element_type` and `element_ref` between operation and problem description.
+
+Before A4 can be considered Ready, repository documentation must be reconciled so the active provider prompt, verification evidence and upstream A2/A3 operator contract do not contradict one another.
+
+## 8. Retest consequence
+
+The next operator retest should preserve the guided style and verify:
+
+```text
+identity
+model
+installation
+operation
+element_type
+element_ref
+problem_description
+```
+
+PASS requires identity completeness, each slot retained correctly, only the next missing/uncertain slot requested, element type and exact reference kept distinct, ambiguous values clarified neutrally without cross-slot speculation, final problem description not overwriting another slot, and no real BODYSHOP action claimed.
