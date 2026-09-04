@@ -185,21 +185,6 @@ Recommended variables:
 
 ```text
 channel_mode
-a ctivation_verified
-caller_role
-known_identity
-known_model
-known_installation
-known_operation
-active_breakdown_count
-breakdown_ref
-flow_stage
-```
-
-Canonical spelling for implementation:
-
-```text
-channel_mode
 activation_verified
 caller_role
 known_identity
