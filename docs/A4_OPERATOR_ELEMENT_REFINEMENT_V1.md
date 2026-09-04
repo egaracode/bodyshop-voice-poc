@@ -11,8 +11,6 @@ This document records the A4 product refinement discovered during live ElevenLab
 
 It does not authorize SQL, Supabase, AI-Control-Workshop changes, production persistence, real operational data, or any state-changing integration.
 
----
-
 ## 2. Accepted operator sequence
 
 AI Control should guide the operator through this preferred sequence:
@@ -31,48 +29,15 @@ The conversation remains guided and bounded. Asking the fields one by one is pre
 
 If the operator spontaneously supplies several clear fields in one utterance, AI Control should retain them and ask only for what is still missing or uncertain.
 
----
-
 ## 3. Element semantics
 
-Two separate element concepts are required.
+`element_type` answers what kind of physical element is affected, for example robot, motor, brida or pinza.
 
-### 3.1 Element type
-
-`element_type` answers what kind of physical element is affected.
-
-Examples using synthetic/generic categories:
-
-```text
-robot
-motor
-brida
-pinza
-```
-
-### 3.2 Element reference
-
-`element_ref` answers which exact element is affected.
-
-Example synthetic reference:
-
-```text
-ST12
-```
+`element_ref` answers which exact element is affected, using a synthetic reference such as `ST12` in public tests.
 
 AI Control must not collapse `element_type` and `element_ref` into one slot when the exact element is still unresolved.
 
-After learning the element type, the next question should adapt naturally:
-
-```text
-robot → "¿Qué robot es?"
-motor → "¿Qué motor es?"
-brida → "¿Qué brida es?"
-```
-
-The goal is natural guided speech, not a rigid generic questionnaire.
-
----
+After learning the element type, the next question should adapt naturally, for example `¿Qué robot es?`, `¿Qué motor es?` or `¿Qué brida es?`.
 
 ## 4. Slot boundary
 
@@ -87,15 +52,7 @@ element_ref
 problem_description
 ```
 
-Rules:
-
-- a problem narrative must not silently satisfy `operation`;
-- an activity description must not silently satisfy `operation`;
-- an operation-like value must not silently satisfy `installation`;
-- a generic element type must not silently satisfy the exact element reference;
-- ambiguous cross-slot answers require focused clarification rather than guessing.
-
----
+A problem narrative must not silently satisfy `operation`; an activity description must not silently satisfy `operation`; an operation-like value must not silently satisfy `installation`; a generic element type must not silently satisfy the exact element reference; ambiguous cross-slot answers require focused clarification rather than guessing.
 
 ## 5. Conceptual persistence hierarchy
 
@@ -111,15 +68,11 @@ MODEL
          └─ problem
 ```
 
-This is a conversational/domain requirement only.
-
-It is not evidence of an existing SQL schema and does not authorize SQL or persistence changes.
-
----
+This is a conversational/domain requirement only. It is not evidence of an existing SQL schema and does not authorize SQL or persistence changes.
 
 ## 6. ElevenLabs state handling
 
-`element_type` and `element_ref` are collected during the conversation and do **not** need to be custom dynamic variables for A4.
+`element_type` and `element_ref` are collected during the conversation and do not need to be custom dynamic variables for A4.
 
 ElevenLabs dynamic variables are used here only for context injected into the session, such as channel mode, caller role and already-known external context.
 
@@ -129,29 +82,17 @@ A future implementation may choose a structured state mechanism or post-conversa
 
 No real element identifiers may be committed to this public repository.
 
----
-
 ## 7. Contract impact
 
-Merged A2 currently defines the earlier minimum operator sequence:
-
-```text
-identity → model → installation → operation → problem description
-```
-
-Merged A3 `OP-02` / `OP-03` currently verify that earlier field set.
+Merged A2 currently defines the earlier minimum operator sequence `identity → model → installation → operation → problem description` and merged A3 `OP-02` / `OP-03` currently verify that earlier field set.
 
 Albert's accepted A4 refinement adds `element_type` and `element_ref` between operation and problem description.
 
-Therefore, before A4 can be considered Ready, repository documentation must be reconciled so that the active provider prompt, verification evidence and upstream A2/A3 operator contract do not contradict one another.
-
-Until that synchronization is complete, this document is the explicit A4 delta for the active sandbox testing block.
-
----
+Before A4 can be considered Ready, repository documentation must be reconciled so the active provider prompt, verification evidence and upstream A2/A3 operator contract do not contradict one another.
 
 ## 8. Retest consequence
 
-The next operator retest should preserve the guided style and verify this sequence:
+The next operator retest should preserve the guided style and verify:
 
 ```text
 identity
@@ -163,12 +104,4 @@ element_ref
 problem_description
 ```
 
-PASS requires:
-
-- each slot is retained correctly;
-- AI Control asks only the next missing/uncertain slot;
-- element type and exact element reference remain distinct;
-- the final problem description does not overwrite another slot;
-- no real BODYSHOP action is claimed.
-
-Multi-slot behavior remains a separate capability: if several clear fields arrive in one utterance, they should be retained without forcing repetition.
+PASS requires each slot retained correctly, only the next missing/uncertain slot requested, element type and exact reference kept distinct, final problem description not overwriting another slot, and no real BODYSHOP action claimed.
