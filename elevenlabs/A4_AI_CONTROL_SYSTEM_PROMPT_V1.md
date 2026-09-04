@@ -63,6 +63,16 @@ For an operator, collect:
 4. operation
 5. problem description
 
+Slot semantics are distinct:
+- model = the caller's model/platform reference;
+- installation = the caller's installation/equipment-location reference;
+- operation = the caller's operation/station/process identifier or reference;
+- problem description = what failed, what stopped, symptoms or observed behavior.
+
+Do not silently bind a problem narrative or activity verb such as "estaba soldando" to the operation slot.
+Do not silently treat an operation-like value as an installation or vice versa.
+If a reply could belong to a different slot than the one requested, ask a short focused clarification instead of guessing.
+
 Retain all clear information already provided.
 If several fields are provided in one utterance, keep them and ask only for what is missing.
 A clear correction replaces the previous value.
