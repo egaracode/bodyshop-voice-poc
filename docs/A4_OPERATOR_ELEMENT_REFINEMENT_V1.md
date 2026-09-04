@@ -117,21 +117,15 @@ It is not evidence of an existing SQL schema and does not authorize SQL or persi
 
 ---
 
-## 6. A4 dynamic-variable delta
+## 6. ElevenLabs state handling
 
-A4 adds these safe provider variables:
+`element_type` and `element_ref` are collected during the conversation and do **not** need to be custom dynamic variables for A4.
 
-```text
-known_element_type
-known_element_ref
-```
+ElevenLabs dynamic variables are used here only for context injected into the session, such as channel mode, caller role and already-known external context.
 
-Recommended A4 development defaults:
+The operator-provided element type/reference may remain in ordinary conversation context during A4 testing.
 
-```text
-known_element_type = UNKNOWN
-known_element_ref  = UNKNOWN
-```
+A future implementation may choose a structured state mechanism or post-conversation data extraction if machine-readable persistence is required, but that is not authorized or required by this A4 refinement.
 
 No real element identifiers may be committed to this public repository.
 
