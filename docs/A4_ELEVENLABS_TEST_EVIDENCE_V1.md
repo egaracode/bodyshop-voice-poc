@@ -56,7 +56,33 @@ Observed provider configuration:
 
 `OP-03` was not actually exercised because the caller supplied the fields sequentially rather than in one multi-slot utterance.
 
-### 3.2 Sanitized observed behavior
+### 3.2 Product clarification accepted by Albert
+
+The sequential questioning observed in this run is desired behavior and is not itself a defect.
+
+Preferred default operator dialogue is:
+
+```text
+identity
+→ model
+→ installation
+→ operation
+→ problem description
+```
+
+AI Control should normally lead the caller through bounded questions one field at a time because this reduces ambiguity and guides the conversation.
+
+`OP-03` remains an opportunistic capability, not the preferred default questioning style: if the caller voluntarily supplies several valid fields in one utterance, AI Control should retain them and avoid asking for those fields again.
+
+Therefore:
+
+- sequential bounded questioning = desired;
+- redundant questioning for already supplied clear fields = undesired;
+- multi-slot extraction = supported when the human provides multiple slots, but AI Control does not need to solicit them all at once.
+
+This clarification is consistent with the merged A2 conversational foundation and does not change the BODYSHOP lifecycle.
+
+### 3.3 Sanitized observed behavior
 
 The agent:
 
@@ -74,18 +100,21 @@ The agent:
 
 No raw values are preserved here.
 
-### 3.3 Verdicts
+### 3.4 Verdicts
 
 | Assertion | Verdict | Rationale |
 |---|---|---|
-| `OP-02` guided collection | `FAIL` | The agent did not preserve the semantic boundary between installation, operation and problem description. |
+| Guided sequential questioning style | `PASS` | The agent led the operator through identity → model → installation → operation in bounded turns, which is the preferred product behavior. |
+| `OP-02` semantic guided collection | `FAIL` | Despite the correct dialogue pacing, the agent did not preserve the semantic boundary between installation, operation and problem description. |
 | `OP-03` multi-slot retention | `NOT_RUN` | The user did not provide the intended multi-slot input in one turn. |
 | Sandbox no-real-action invariant | `PASS` | The agent explicitly kept the result in test mode and did not claim a real registration/notification. |
 | No final technical closure claim | `PASS / NOT_APPLICABLE_TO_OPERATOR_FLOW` | No technician pre-close/final-close behavior was exercised. |
 
-### 3.4 Root cause diagnosis
+### 3.5 Root cause diagnosis
 
-The compact A4 system prompt listed the required operator fields but did not define the semantic boundary of each slot strongly enough.
+The failure is not that AI Control asked for the fields separately.
+
+The defect is narrower: the compact A4 system prompt listed the required operator fields but did not define the semantic boundary of each slot strongly enough.
 
 Specifically, it lacked explicit instructions that:
 
@@ -94,9 +123,9 @@ Specifically, it lacked explicit instructions that:
 - an activity verb/description must not be silently treated as an operation identifier;
 - a value that appears to belong to a different requested slot requires focused clarification rather than silent binding.
 
-Therefore this run is treated as a prompt-contract defect exposed by provider testing, not as acceptable behavior.
+Therefore this run is treated as a prompt-contract defect exposed by provider testing, while the sequential dialogue strategy itself is accepted.
 
-### 3.5 Corrective action
+### 3.6 Corrective action
 
 The A4 provider prompt was corrected in commit:
 
@@ -106,15 +135,16 @@ The correction adds explicit operator slot semantics and a fail-safe cross-slot 
 
 Evidence from `A4-MANUAL-001` remains evidence for the previous prompt configuration only.
 
-### 3.6 Required retest
+### 3.7 Required retest
 
 After loading and publishing the corrected prompt in ElevenLabs:
 
-1. rerun `OP-02` using synthetic Demo values;
-2. run `OP-03` with identity + model + installation + operation in one utterance;
-3. verify the agent asks only for problem description;
-4. verify that a problem narrative cannot silently satisfy the operation slot;
-5. keep all future test values synthetic.
+1. rerun `OP-02` using synthetic Demo values and keep the preferred one-question-at-a-time flow;
+2. verify identity → model → installation → operation → problem description are bound to the correct slots;
+3. separately run `OP-03` by voluntarily supplying multiple synthetic fields in one utterance;
+4. verify AI Control retains every clear supplied field and asks only for what remains missing;
+5. verify that a problem narrative cannot silently satisfy the operation slot;
+6. keep all future test values synthetic.
 
 ---
 
@@ -122,7 +152,8 @@ After loading and publishing the corrected prompt in ElevenLabs:
 
 ```text
 A4_PROVIDER_AGENT: CREATED_AND_PUBLISHED
-A4-MANUAL-001_OP-02: FAIL
+A4-MANUAL-001_GUIDED_SEQUENCE_STYLE: PASS
+A4-MANUAL-001_OP-02_SEMANTIC_COLLECTION: FAIL
 A4-MANUAL-001_OP-03: NOT_RUN
 SANDBOX_NO_REAL_ACTION: PASS
 CORRECTIVE_PROMPT_COMMIT: 7f2ae0e4377abadc24058ae795fd04c2973de232
