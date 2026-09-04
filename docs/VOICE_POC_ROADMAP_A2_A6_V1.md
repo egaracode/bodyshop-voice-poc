@@ -17,6 +17,7 @@ A3  Conversational Verification
      ✅ MERGED
 
 A4  ElevenLabs Sandbox Agent
+    real configuration, still isolated
      ← NEXT
 
 A5  Voice / audio validation
@@ -74,7 +75,7 @@ NEXT
 
 A4 is the next functional block.
 
-A4 is the first block intended to create/configure a real ElevenLabs agent in a sandbox context and to execute the provider-compatible verification path defined by A3 where authorized.
+A4 is the first block intended to create/configure a real ElevenLabs agent in a sandbox context.
 
 It must remain isolated from BODYSHOP PRO production/runtime and from any real operational action.
 
