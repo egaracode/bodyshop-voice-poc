@@ -171,18 +171,28 @@ It does **not** establish:
 
 Those remain A5-owned.
 
-## 6. Current next action
+## 6. Corrective prompt delta after A4-MANUAL-003
 
-Before considering `OP-02` passed, strengthen one prompt rule so an unclear answer to the requested slot triggers a neutral clarification without speculating that the value belongs to another slot.
-
-Then republish and rerun a focused identity/ambiguity test. Separately, `OP-03` remains pending.
-
-Merged A2/A3 still require synchronization with the accepted seven-field operator contract before Ready.
-
-## 7. Current evidence state
+Commit `4351f7d569db3fe61382e4f337a221f3ee7ce240` strengthens the no-guess boundary with one explicit rule:
 
 ```text
-A4_PROVIDER_AGENT: CREATED_AND_PUBLISHED
+Never say an unclear value is "probably" another slot. Ask a neutral clarification without assigning it.
+```
+
+This commit changes the repository head and therefore requires the provider prompt to be updated/published before the next valid retest. A4-MANUAL-003 remains evidence for the immediately previous provider configuration only.
+
+## 7. Current next action
+
+1. Apply/publish the one-line no-cross-slot-speculation correction in ElevenLabs.
+2. Rerun a focused ambiguous-identity/cross-slot test.
+3. Confirm the agent asks a neutral clarification without hypothesizing another slot.
+4. Run `OP-03` separately.
+5. Reconcile merged A2/A3 with the accepted seven-field operator contract before Ready.
+
+## 8. Current evidence state
+
+```text
+A4_PROVIDER_AGENT: CREATED_AND_PUBLISHED_PRE_CROSS_SLOT_FIX
 A4-MANUAL-001_OP-02: FAIL
 A4-MANUAL-002_TECHNICAL_HIERARCHY: PASS
 A4-MANUAL-002_IDENTITY_COMPLETENESS: FAIL
@@ -193,6 +203,7 @@ A4-MANUAL-003_REAL_WORKSHOP_NOISE: PRELIMINARY_PASS
 A4-MANUAL-003_NO_CROSS_SLOT_SPECULATION: FAIL
 A4-MANUAL-003_OP-02_OVERALL: FAIL
 A4-MANUAL-003_OP-03: NOT_RUN
+CROSS_SLOT_FIX_COMMIT: 4351f7d569db3fe61382e4f337a221f3ee7ce240
 SANDBOX_NO_REAL_ACTION: PASS
 A4_OPERATOR_ELEMENT_REFINEMENT: ACCEPTED
 ELEMENT_DYNAMIC_VARIABLES_REQUIRED: NO
