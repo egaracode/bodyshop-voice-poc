@@ -2,9 +2,9 @@
 
 ## 1. Purpose
 
-This document records the agreed functional sequence for the isolated `egaracode/bodyshop-voice-poc` laboratory after completion of A2.
+This document records the agreed functional sequence for the isolated `egaracode/bodyshop-voice-poc` laboratory after completion of the A2 conversational foundation and merge of the A3 conversational verification/test contract.
 
-It is a roadmap and sequencing contract only. It does not by itself authorize implementation of A3, A4, A5 or A6.
+It is a roadmap and sequencing contract only. It does not by itself authorize implementation of A4, A5 or A6.
 
 ## 2. Agreed sequence
 
@@ -14,17 +14,20 @@ A2  Conversational Foundation
 
 A3  Conversational Verification
     + ElevenLabs Test Contract
-     ← NEXT
+     ✅ MERGED
 
 A4  ElevenLabs Sandbox Agent
     real configuration, still isolated
+     ← NEXT
 
 A5  Voice / audio validation
     phone + F400 + walkie/Zello
+    PLANNED
 
 A6  Future integration evaluation
     with BODYSHOP PRO
     only if the previous blocks pass
+    GATED
 ```
 
 ## 3. Block status and intent
@@ -46,28 +49,37 @@ A2 is complete and is not reopened by this roadmap.
 Status:
 
 ```text
-NEXT
+MERGED
 ```
 
-A3 is the next functional block.
+A3 converted the A2 conversational behavior into an explicit PASS/FAIL verification contract and mapped each verification concern to the appropriate owning layer, including ElevenLabs-native testing, adapter-required checks, hybrid verification, BODYSHOP domain assertions and A5 real-audio validation.
 
-Its purpose is to define how the A2 conversational behavior will be verified through explicit PASS/FAIL scenarios and how those scenarios map to ElevenLabs testing capabilities where appropriate.
+A3 was merged through PR #9.
 
-A3 remains a separate block and requires its own Issue, branch, validation and PR.
+`A3 MERGED` means the verification/test contract is versioned in `main`. It does **not** mean ElevenLabs runtime tests have already been executed.
+
+The A3 contract explicitly preserves:
+
+```text
+RUNTIME_TEST_EXECUTION: NOT_STARTED
+ELEVENLABS_AGENT: NOT_CREATED_BY_A3
+```
 
 ### A4 — ElevenLabs Sandbox Agent
 
 Status:
 
 ```text
-PLANNED
+NEXT
 ```
+
+A4 is the next functional block.
 
 A4 is the first block intended to create/configure a real ElevenLabs agent in a sandbox context.
 
 It must remain isolated from BODYSHOP PRO production/runtime and from any real operational action.
 
-A4 does not begin through this roadmap document.
+A4 requires its own Issue, branch, validation and PR. This roadmap synchronization does not authorize A4 implementation by itself.
 
 ### A5 — Voice / Audio Validation
 
@@ -111,7 +123,7 @@ The intended progression is:
 
 ```text
 A2 MERGED
-→ A3 VERIFIED
+→ A3 CONTRACT MERGED
 → A4 SANDBOX
 → A5 REAL VOICE/AUDIO VALIDATION
 → A6 INTEGRATION EVALUATION
@@ -157,19 +169,20 @@ Any such work requires a separately authorized functional block.
 
 `egaracode/AI-Control-Workshop` remains the canonical BODYSHOP PRO repository and is not modified by this roadmap.
 
-No canonical-state update is required by this documentation-only roadmap.
+No canonical-state update is required by this documentation-only roadmap synchronization.
 
 ## 7. Current roadmap position
 
 ```text
-CURRENT: A2 MERGED
-NEXT:    A3 Conversational Verification + ElevenLabs Test Contract
-LATER:   A4 → A5 → A6
+COMPLETED: A2 Conversational Foundation
+COMPLETED: A3 Conversational Verification + ElevenLabs Test Contract
+NEXT:      A4 ElevenLabs Sandbox Agent
+LATER:     A5 → A6
 ```
 
 ## 8. Stop point
 
 ```text
-ROADMAP_DOCUMENTED
-A3_IMPLEMENTATION_NOT_STARTED
+ROADMAP_SYNCED_AFTER_A3
+A4_IMPLEMENTATION_NOT_STARTED
 ```
