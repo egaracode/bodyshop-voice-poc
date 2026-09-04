@@ -16,7 +16,7 @@ It does not authorize SQL, Supabase, AI-Control-Workshop changes, production per
 AI Control should guide the operator through this preferred sequence:
 
 ```text
-identity
+identity (name + at least one surname)
 → model
 → installation
 → operation
@@ -37,13 +37,14 @@ If the operator spontaneously supplies several clear fields in one utterance, AI
 
 AI Control must not collapse `element_type` and `element_ref` into one slot when the exact element is still unresolved.
 
-After learning the element type, the next question should adapt naturally, for example `¿Qué robot es?`, `¿Qué motor es?` or `¿Qué brida es?`.
+After learning the element type, the next question should adapt naturally, for example `¿Qué robot es?`, `¿Qué motor es?`, `¿Qué brida es?` or `¿Qué pinza es?`.
 
 ## 4. Slot boundary
 
 The operator slots are distinct:
 
 ```text
+identity
 model
 installation
 operation
@@ -52,7 +53,11 @@ element_ref
 problem_description
 ```
 
+Identity is complete only when name + at least one surname are present.
+
 A problem narrative must not silently satisfy `operation`; an activity description must not silently satisfy `operation`; an operation-like value must not silently satisfy `installation`; a generic element type must not silently satisfy the exact element reference; ambiguous cross-slot answers require focused clarification rather than guessing.
+
+An unclear value must not be described as probably belonging to another slot before clarification.
 
 ## 5. Conceptual persistence hierarchy
 
@@ -86,7 +91,7 @@ No real element identifiers may be committed to this public repository.
 
 Merged A2 currently defines the earlier minimum operator sequence `identity → model → installation → operation → problem description` and merged A3 `OP-02` / `OP-03` currently verify that earlier field set.
 
-Albert's accepted A4 refinement adds `element_type` and `element_ref` between operation and problem description.
+Albert's accepted A4 refinement adds identity completeness plus `element_type` and `element_ref` between operation and problem description.
 
 Before A4 can be considered Ready, repository documentation must be reconciled so the active provider prompt, verification evidence and upstream A2/A3 operator contract do not contradict one another.
 
@@ -104,4 +109,4 @@ element_ref
 problem_description
 ```
 
-PASS requires each slot retained correctly, only the next missing/uncertain slot requested, element type and exact reference kept distinct, final problem description not overwriting another slot, and no real BODYSHOP action claimed.
+PASS requires identity completeness, each slot retained correctly, only the next missing/uncertain slot requested, element type and exact reference kept distinct, ambiguous values clarified neutrally without cross-slot speculation, final problem description not overwriting another slot, and no real BODYSHOP action claimed.
