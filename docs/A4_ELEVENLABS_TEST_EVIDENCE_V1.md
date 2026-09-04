@@ -57,8 +57,6 @@ AI Control should normally lead the caller through bounded questions one field a
 
 The agent retained identity/model, then failed to preserve semantic slot boundaries among installation, operation and problem description in the first published configuration. It nevertheless finished with an explicit sandbox-only acknowledgement and did not claim a real registration/notification.
 
-No raw values are preserved here.
-
 ### 3.4 Verdicts
 
 | Assertion | Verdict | Rationale |
@@ -68,16 +66,6 @@ No raw values are preserved here.
 | `OP-03` multi-slot retention | `NOT_RUN` | Multi-slot input was not supplied. |
 | Sandbox no-real-action invariant | `PASS` | No real registration/notification was claimed. |
 
-### 3.5 Root cause diagnosis
-
-The failure was not sequential questioning. The compact prompt did not define slot boundaries strongly enough. A4 testing then exposed a further need: after operation, identify both physical element type and exact element reference before problem description.
-
-### 3.6 Corrective action
-
-The active A4 provider prompt now defines distinct model/installation/operation semantics, guided `element_type` and `element_ref` collection, natural element-specific follow-up questions and fail-safe cross-slot clarification.
-
-`element_type` / `element_ref` do not need to be ElevenLabs custom dynamic variables because those values are collected during the conversation.
-
 ## 4. Manual run A4-MANUAL-002
 
 Date: `2026-09-04`
@@ -86,91 +74,130 @@ Provider configuration: refined seven-field operator prompt republished manually
 
 ### 4.1 Intended scenario
 
-`OP-02` — guided operator flow with the refined hierarchy:
-
-```text
-identity
-→ model
-→ installation
-→ operation
-→ element type
-→ element reference
-→ problem description
-```
+`OP-02` — guided operator flow with the refined hierarchy.
 
 ### 4.2 Sanitized observed behavior
 
-The agent:
-
-1. asked for name and surname;
-2. accepted only a partial identity and moved on instead of requesting the missing surname;
-3. collected model;
-4. collected installation;
-5. collected operation;
-6. asked for the affected element type;
-7. interpreted the supplied element as a robot;
-8. separately asked for the exact robot reference;
-9. retained the exact element reference;
-10. asked for the problem description;
-11. retained the problem description without overwriting earlier hierarchy slots;
-12. finished with an explicit test-mode acknowledgement and stated that no real breakdown was registered and no real operational system was notified.
+The technical hierarchy passed from model through problem, including separate element type and exact element reference. The agent maintained the sandbox no-real-action boundary. However, it accepted only a partial identity and progressed to model.
 
 ### 4.3 Verdicts
 
 | Assertion | Verdict | Rationale |
 |---|---|---|
-| Guided sequential questioning style | `PASS` | The agent led the caller through bounded one-field-at-a-time questions. |
-| Model → installation → operation separation | `PASS` | The technical hierarchy remained distinct in this run. |
-| Element type → exact element reference separation | `PASS` | The agent distinguished the generic element type from the exact element reference and asked a separate follow-up. |
-| Problem-description boundary | `PASS` | The problem description remained a separate final field. |
-| Sandbox no-real-action invariant | `PASS` | The agent explicitly stated that no real breakdown was registered and no real operational system was notified. |
-| Identity completeness | `FAIL` | The first question required name + surname, but the agent accepted only a partial identity and continued to model. |
-| `OP-02` overall | `FAIL` | All technical hierarchy slots passed, but one required identity field remained incomplete. |
-| `OP-03` multi-slot retention | `NOT_RUN` | This run intentionally remained sequential. |
+| Guided sequential questioning style | `PASS` | One-field-at-a-time flow behaved as intended. |
+| Model → installation → operation separation | `PASS` | Technical hierarchy remained distinct. |
+| Element type → exact element reference separation | `PASS` | Generic type and exact reference remained separate. |
+| Problem-description boundary | `PASS` | Problem remained the final distinct field. |
+| Sandbox no-real-action invariant | `PASS` | No real action was claimed. |
+| Identity completeness | `FAIL` | Partial identity was incorrectly accepted. |
+| `OP-02` overall | `FAIL` | Required identity was incomplete. |
+| `OP-03` multi-slot retention | `NOT_RUN` | Sequential run only. |
 
-### 4.4 Root cause diagnosis
+### 4.4 Corrective action
 
-The provider prompt named the first slot only as `identity`. Although the first message asked for name and surname, the prompt did not explicitly define when identity is complete. The LLM therefore treated a single supplied name as sufficient.
+Commit `08e59fa8e33b7ba707edf9eeb7048d800fb60e94` made identity semantics explicit: operator identity requires name + at least one surname and must not progress to model until complete.
 
-### 4.5 Corrective action
+## 5. Manual run A4-MANUAL-003 — real workshop ambient noise
 
-Commit `08e59fa8e33b7ba707edf9eeb7048d800fb60e94` makes identity semantics explicit:
+Date: `2026-09-04`
+
+Execution context reported by Albert:
+
+- physical workshop environment;
+- real ambient workshop noise present;
+- ElevenLabs preview/direct conversation path;
+- no F400/PTT/Zello transport used;
+- no real BODYSHOP state-changing integration connected.
+
+The provider configuration used the consolidated prompt manually loaded and published by Albert. Repository commit `1a398687813946a781f9a3cc9664c8757307c84d` mirrors that tested provider prompt after the run; GitHub itself was not the runtime execution surface.
+
+### 5.1 Sanitized observed behavior
+
+The agent:
+
+1. requested name + surname;
+2. received one ambiguous single-token reply;
+3. did **not** accept identity as complete and requested a complete name + surname;
+4. then accepted a complete synthetic identity and moved to model;
+5. retained the synthetic model/platform;
+6. received an installation answer containing operation-like wording;
+7. correctly detected installation/operation ambiguity and asked a focused clarification instead of silently binding both;
+8. after clarification, retained installation and separately requested operation;
+9. retained operation;
+10. requested the affected element type;
+11. received a robot-type answer and separately requested the exact robot reference;
+12. retained the exact element reference;
+13. requested and retained the problem description;
+14. produced a test-mode completion statement and explicitly said no real breakdown was registered and no operational system was notified;
+15. continued with an optional extra test-session question.
+
+The raw transcript values and screenshot are intentionally not committed.
+
+### 5.2 Important finding
+
+On the first ambiguous identity reply, the agent verbally hypothesized that the token was **probably an installation** before asking again for complete identity.
+
+It did not persist that hypothesis as the installation later in the flow, but the wording violates the no-guess / neutral-clarification guardrail. An unclear answer to the current slot must not be labeled as probably belonging to another operational slot.
+
+### 5.3 Verdicts
+
+| Assertion | Verdict | Rationale |
+|---|---|---|
+| Identity completeness | `PASS` | The agent did not proceed to model until name + surname were supplied. |
+| Guided sequence | `PASS` | Identity → model → installation → operation → element type → exact reference → problem remained ordered. |
+| Installation / operation ambiguity handling | `PASS` | The agent explicitly clarified an ambiguous cross-slot answer rather than binding it silently. |
+| Element type / exact reference boundary | `PASS` | Generic element and exact identifier remained distinct. |
+| Problem-description boundary | `PASS` | Problem remained separate from technical hierarchy slots. |
+| Sandbox no-real-action invariant | `PASS` | No real registration/notification was claimed. |
+| Real workshop-noise transcript continuity | `PRELIMINARY_PASS` | One real-noise conversation remained coherent end-to-end, but this is insufficient to close A5 acoustic/transport verification. |
+| No cross-slot speculation | `FAIL` | The agent verbally guessed that one ambiguous token was probably an installation. |
+| Final-response compactness | `MINOR_DEVIATION` | The agent restated collected data and asked an extra test-session question instead of giving only the minimal sandbox completion response. |
+| `OP-02` overall | `FAIL` | Core collection succeeded, but a hard no-guess guardrail was violated verbally. |
+| `OP-03` multi-slot retention | `NOT_RUN` | This run was not designed as multi-slot extraction. |
+
+### 5.4 Acoustic interpretation boundary
+
+This run is meaningful evidence that the current ElevenLabs preview conversation can preserve the guided semantic flow in at least one real workshop-noise condition.
+
+It does **not** establish:
+
+- F400 microphone/speaker performance;
+- PTT timing;
+- Zello transport behavior;
+- clipped first/last syllables;
+- overlapping-speaker safety;
+- repeated-run robustness;
+- production acoustic reliability.
+
+Those remain A5-owned.
+
+## 6. Current next action
+
+Before considering `OP-02` passed, strengthen one prompt rule so an unclear answer to the requested slot triggers a neutral clarification without speculating that the value belongs to another slot.
+
+Then republish and rerun a focused identity/ambiguity test. Separately, `OP-03` remains pending.
+
+Merged A2/A3 still require synchronization with the accepted seven-field operator contract before Ready.
+
+## 7. Current evidence state
 
 ```text
-identity = operator name + at least one surname
-```
-
-and requires a focused surname follow-up before progressing to model when only a first name is supplied.
-
-Evidence from `A4-MANUAL-002` remains evidence for the previous provider prompt configuration only.
-
-## 5. Required retest
-
-After loading and publishing the identity-completeness correction in ElevenLabs:
-
-1. rerun guided `OP-02` with entirely synthetic identity and technical values;
-2. deliberately provide only a synthetic first name first;
-3. verify AI Control asks for the missing surname and does not move to model until identity is complete;
-4. continue model → installation → operation → element type → element reference → problem description;
-5. verify every technical slot remains separated as in A4-MANUAL-002;
-6. separately run `OP-03` later with multiple clear fields in one voluntary utterance.
-
-## 6. Current evidence state
-
-```text
-A4_PROVIDER_AGENT: CREATED_AND_PUBLISHED_PRE_IDENTITY_FIX
-A4-MANUAL-001_GUIDED_SEQUENCE_STYLE: PASS
-A4-MANUAL-001_OP-02_SEMANTIC_COLLECTION: FAIL
+A4_PROVIDER_AGENT: CREATED_AND_PUBLISHED
+A4-MANUAL-001_OP-02: FAIL
 A4-MANUAL-002_TECHNICAL_HIERARCHY: PASS
 A4-MANUAL-002_IDENTITY_COMPLETENESS: FAIL
-A4-MANUAL-002_OP-02_OVERALL: FAIL
-A4-MANUAL-002_OP-03: NOT_RUN
+A4-MANUAL-003_IDENTITY_COMPLETENESS: PASS
+A4-MANUAL-003_TECHNICAL_HIERARCHY: PASS
+A4-MANUAL-003_AMBIGUITY_CLARIFICATION: PASS
+A4-MANUAL-003_REAL_WORKSHOP_NOISE: PRELIMINARY_PASS
+A4-MANUAL-003_NO_CROSS_SLOT_SPECULATION: FAIL
+A4-MANUAL-003_OP-02_OVERALL: FAIL
+A4-MANUAL-003_OP-03: NOT_RUN
 SANDBOX_NO_REAL_ACTION: PASS
 A4_OPERATOR_ELEMENT_REFINEMENT: ACCEPTED
 ELEMENT_DYNAMIC_VARIABLES_REQUIRED: NO
-IDENTITY_FIX_COMMIT: 08e59fa8e33b7ba707edf9eeb7048d800fb60e94
-REFINED_PROMPT_REPUBLICATION: REQUIRED
-RETEST_REQUIRED: YES
+A5_ACOUSTIC_VERIFICATION: NOT_CLOSED
+A2_A3_OPERATOR_CONTRACT_SYNC: REQUIRED_BEFORE_READY
 A4_OVERALL: NOT_PASS
 READY: NO
 MERGE: NO
