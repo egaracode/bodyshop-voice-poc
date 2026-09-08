@@ -271,3 +271,5 @@ A4_OVERALL: NOT_PASS
 READY: NO
 MERGE: NO
 ```
+
+Current repository head after evidence/documentation sync: `df178632ad9bbec9e4a44868a154c090afa3d1b4` was superseded by this documentation commit. Provider runtime remains V1 until manual publication of V2 + Procedures.
