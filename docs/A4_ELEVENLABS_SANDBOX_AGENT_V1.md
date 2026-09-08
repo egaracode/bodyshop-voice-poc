@@ -3,19 +3,17 @@
 ## 1. Status
 
 ```text
-A4_REPOSITORY_CONFIGURATION: PROCEDURES_REFACTOR_PREPARED
-ELEVENLABS_SANDBOX_AGENT: CREATED_AND_PUBLISHED_WITH_V1
-PROCEDURES_PROVIDER_LOAD: NOT_YET_DONE
-POST_REFACTOR_NATIVE_TESTS: NOT_RUN
+A4_REPOSITORY_CONFIGURATION: GUIDED_PROCEDURES_REFINEMENT_PREPARED
+ELEVENLABS_SANDBOX_AGENT: CREATED
+CURRENT_PROVIDER_CONFIGURATION: MANUALLY_EVOLVED / NOT_EXACTLY_REPRODUCIBLE_FROM_REPO
+LATEST_EXACT_TARGET: SYSTEM_PROMPT_V3 + OPERATOR_V2 + ELEMENT_IDENTIFICATION_V1 + TECHNICIAN_V1
+LATEST_EXACT_TARGET_PROVIDER_LOAD: NOT_YET_DONE
+LATEST_EXACT_TARGET_RUNTIME_TESTS: NOT_RUN
 READY: NO
 MERGE: NO
 ```
 
-A4 is the first provider-runtime block in the isolated `egaracode/bodyshop-voice-poc` laboratory.
-
-The objective is to configure one real ElevenLabs sandbox agent for AI Control and execute only the provider-native portion of the merged A3 verification contract.
-
-BODYSHOP semantics remain authoritative over provider behavior.
+A4 is the provider-runtime block in the isolated `egaracode/bodyshop-voice-poc` laboratory. BODYSHOP semantics remain authoritative over provider behavior.
 
 ## 2. Repository baseline
 
@@ -23,104 +21,100 @@ BODYSHOP semantics remain authoritative over provider behavior.
 main = 2650665d60eb91b94eefb82cf13be85e93ac81d8
 Issue = #12
 branch = feat/a4-elevenlabs-sandbox-agent-v1
-PR = #13
+PR = #13 DRAFT
 ```
 
-Authoritative inputs:
+Current configuration assets:
 
-1. `docs/A2_CONVERSATIONAL_FOUNDATION_V1.md`
-2. `docs/A3_CONVERSATIONAL_VERIFICATION_AND_ELEVENLABS_TEST_CONTRACT_V1.md`
-3. `docs/VOICE_POC_ROADMAP_A2_A6_V1.md`
-4. `README.md`
-5. historical tested prompt: `elevenlabs/A4_AI_CONTROL_SYSTEM_PROMPT_V1.md`
-6. authorized candidate prompt: `elevenlabs/A4_AI_CONTROL_SYSTEM_PROMPT_V2.md`
-7. authorized candidate procedure: `elevenlabs/A4_OPERATOR_BREAKDOWN_PROCEDURE_V1.md`
-8. authorized candidate procedure: `elevenlabs/A4_TECHNICIAN_PRE_CLOSE_PROCEDURE_V1.md`
+- historical prompt: `elevenlabs/A4_AI_CONTROL_SYSTEM_PROMPT_V1.md`
+- historical Procedures candidate: `elevenlabs/A4_AI_CONTROL_SYSTEM_PROMPT_V2.md`
+- latest guided prompt target: `elevenlabs/A4_AI_CONTROL_SYSTEM_PROMPT_V3.md`
+- historical operator candidate: `elevenlabs/A4_OPERATOR_BREAKDOWN_PROCEDURE_V1.md`
+- latest guided operator target: `elevenlabs/A4_OPERATOR_BREAKDOWN_PROCEDURE_V2.md`
+- latest element sub-procedure target: `elevenlabs/A4_ELEMENT_IDENTIFICATION_SUBPROCEDURE_V1.md`
+- technician target: `elevenlabs/A4_TECHNICIAN_PRE_CLOSE_PROCEDURE_V1.md`
 
 ## 3. Safety boundary
 
 A4 remains isolated sandbox only.
 
-A4 must not connect:
+Do not connect Supabase, `AI-Control-Workshop`, BODYSHOP production runtime, corporate network, Zello, real phone/SIP, real operational webhook, real state-changing tool, real worker data or real operational identifiers.
 
-```text
-Supabase
-AI-Control-Workshop
-BODYSHOP production runtime
-corporate network
-Zello API
-real phone number
-SIP trunk
-Twilio / Exotel / WhatsApp transport
-real BODYSHOP operational webhook
-real state-changing tool
-real worker data
-real operational identifiers
-```
-
-The shared-walkie `addressed to Control` gate remains BODYSHOP-owned and external to ElevenLabs.
-
-F400, PTT, Zello transport, clipping, overlapping voices, radio compression and production acoustic reliability remain A5-owned.
+The shared-walkie `addressed to Control` gate remains BODYSHOP-owned and external to ElevenLabs. F400/PTT/Zello/acoustic robustness remains A5-owned.
 
 ## 4. Authorized provider architecture
 
-Albert authorized on `2026-09-08` an internal A4 refactor from a monolithic prompt to:
+Albert authorized the internal A4 Procedures refactor and then the guided operator refinement:
 
 ```text
-SHORT GLOBAL SYSTEM PROMPT
-+ FREE-FORM PROCEDURE — Operator breakdown
-+ FREE-FORM PROCEDURE — Technician pre-close
+GLOBAL SYSTEM PROMPT V3
+→ global role / sandbox / runtime context / safety
+→ guided-first operator conversation
+→ use known caller role when available
+
+FREE-FORM PROCEDURE — Operator breakdown V2
+→ one missing field at a time
+→ identity → model → installation → operation → element → problem
+→ retain clear extra fields without asking again
+→ uncertainty / correction / slot boundaries
+
+FREE-FORM SUB-PROCEDURE — Element identification V1
+→ physical-element identification rules
+→ reference required only when applicable
+→ validated A4 examples: brida vs antorcha
+
+FREE-FORM PROCEDURE — Technician pre-close V1
+→ technician resolution / REQUEST_PRE_CLOSE semantics
 ```
 
-No model, provisional voice, existing 10 dynamic variables, tool, integration, Supabase, phone/SIP/Zello, external activation ownership or BODYSHOP lifecycle authority changes are authorized by this refactor.
+No model, provisional voice, existing 10 dynamic variables, tool, integration, Supabase, phone/SIP/Zello, external activation ownership or BODYSHOP lifecycle authority change is authorized.
 
-### 4.1 Global System Prompt V2
+## 5. Guided operator contract
 
-Owns only:
-
-- AI Control identity and Spanish voice style;
-- test-only / no-real-action boundary;
-- runtime context variables;
-- direct-phone vs external shared-walkie activation boundary;
-- global confirmation/recovery behavior;
-- global safety guardrails.
-
-### 4.2 Operator breakdown Procedure
-
-Owns:
+Default conversation structure:
 
 ```text
 identity
 → model
 → installation
 → operation
-→ element type
-→ exact element reference
+→ affected physical element
+→ exact element reference ONLY IF APPLICABLE
 → problem description
 ```
 
-It also owns:
+The agent controls the sequence. If the operator voluntarily provides additional clear required fields, retain them and skip redundant questions.
 
-- clear correction replaces previous value;
-- multi-slot retention;
-- neutral clarification;
-- explicit uncertainty remains UNCONFIRMED;
-- `VALUE HEARD != VALUE CONFIRMED`;
-- no progress until the current critical value is clear enough to rely on.
+Definitions:
 
-### 4.3 Technician pre-close Procedure
+- `installation` = local production installation / area / equipment grouping relevant to the breakdown; do not reinterpret it as factory/corporate site unless explicitly meant.
+- `operation` = exact operation/station/process reference or identifier; machine activity does not satisfy this slot.
+- `problem` = observable symptom is sufficient; do not require root-cause diagnosis.
+- element reference is conditional, not universal.
 
-Owns:
+## 6. Element-identification boundary
 
-- technician resolution wording;
-- `REQUEST_PRE_CLOSE` semantics;
-- exact active-breakdown ambiguity;
-- operator/technician role separation;
-- `PRE-CLOSE != final technical closure`.
+`Element identification` is a sub-procedure with no independent trigger. It is invoked only by `Operator breakdown` at the affected-element step.
 
-## 5. Dynamic-variable contract
+Current validated A4 examples:
 
-Keep exactly the existing 10 dynamic variables:
+```text
+brida
+→ individual identifier applies
+→ ask for exact brida reference
+
+antorcha
+→ individual numbering may not exist
+→ do not fabricate or require a number if equipment context identifies it clearly
+```
+
+Unknown element types must fail safe: ask only the minimum neutral clarification needed and never invent numbering rules or equipment relationships.
+
+A future BODYSHOP Element Catalog / Knowledge Base may own a larger validated classification. It is not introduced in A4.
+
+## 7. Dynamic-variable contract
+
+Keep exactly the existing 10 variables:
 
 ```text
 channel_mode
@@ -135,71 +129,33 @@ breakdown_ref
 flow_stage
 ```
 
-No extra variables are required for element type/reference in A4.
+If `caller_role` is already known, use it rather than asking again unless the runtime value is unavailable or genuinely ambiguous.
 
-## 6. Latest provider evidence before Procedures
+## 8. Evidence boundary after manual provider evolution
 
-The latest V1 runtime retest is recorded as `A4-MANUAL-004` in `docs/A4_ELEVENLABS_TEST_EVIDENCE_V1.md`.
+Previous manual provider tests remain historical evidence for the exact configuration actually present at that time.
 
-Key result:
+At least one post-refactor test was executed while the `Operator breakdown` Procedure had been incompletely pasted in the provider UI. That run is **not valid evidence for the complete repository Procedure**.
 
-```text
-identity correction: PASS
-technical slot separation: PASS
-element type + exact reference multi-slot: PASS_PARTIAL_OP03
-previous cross-slot speculation regression: PASS
-sandbox no-real-action: PASS
-explicit uncertainty handling: FAIL
-```
+A later guided run demonstrated useful behavior, but the provider configuration had already evolved manually and was not yet pinned byte-for-byte to a repository target. It therefore remains diagnostic evidence, not closure evidence.
 
-Root cause:
+No PASS may be claimed for V3 / Operator V2 / Element V1 until those exact assets are loaded, published together and retested.
 
-```text
-VALUE HEARD != VALUE CONFIRMED
-explicit doubt → UNCONFIRMED → clarify only that value → do not progress
-```
-
-This invariant is now represented in the Operator breakdown Procedure candidate rather than continuing to grow the global prompt.
-
-## 7. Provider loading procedure
+## 9. Provider loading procedure — next exact target
 
 In the existing ElevenLabs sandbox agent:
 
-1. replace the current V1 system prompt with the exact content of `A4_AI_CONTROL_SYSTEM_PROMPT_V2.md`, excluding its repository-only header note;
-2. create a Free-form Procedure named `Operator breakdown` with trigger and content from `A4_OPERATOR_BREAKDOWN_PROCEDURE_V1.md`;
-3. create a Free-form Procedure named `Technician pre-close` with trigger and content from `A4_TECHNICIAN_PRE_CLOSE_PROCEDURE_V1.md`;
-4. keep the current Qwen model unchanged;
-5. keep the provisional voice unchanged;
-6. keep the existing 10 dynamic variables unchanged;
-7. keep Knowledge Base empty;
-8. keep all tools/integrations empty;
-9. keep phone/SIP/Zello empty;
-10. publish the three configuration assets together;
-11. verify again that no external state-changing integration is reachable.
+1. load `A4_AI_CONTROL_SYSTEM_PROMPT_V3.md` as the system prompt, excluding the repository-only header note;
+2. replace `Operator breakdown` content with `A4_OPERATOR_BREAKDOWN_PROCEDURE_V2.md`;
+3. create `Element identification` as a Free-form Procedure **without its own trigger**;
+4. from the element step in `Operator breakdown`, reference/invoke `Element identification` using the provider Procedure reference UI;
+5. keep `Technician pre-close` from `A4_TECHNICIAN_PRE_CLOSE_PROCEDURE_V1.md`;
+6. keep Qwen, voice and existing 10 dynamic variables unchanged;
+7. keep Knowledge Base, tools, integrations, phone/SIP/Zello and Supabase empty;
+8. publish the exact configuration together;
+9. restart A4 regression testing from this exact provider baseline.
 
-Provider publication changes the behavioral configuration, therefore all post-refactor runtime tests must be executed again against that exact published configuration.
-
-## 8. Native regression target after publication
-
-Restart with the highest-value A4 checks:
-
-```text
-OP-02 guided operator flow
-OP-03 multi-slot retention
-OP-04 focused clarification
-OP-05 correction supersedes prior value
-OP-06 incomplete/uncertain context causes no operational claim
-TECH-01 / 04 / 05 pre-close semantics
-TECH-06 multiple breakdown ambiguity
-TECH-08 never final technical closure
-TECH-09 role/context isolation
-SES-01 active-session continuity
-three-attempt recovery/fallback
-```
-
-After deterministic failures are removed, execute the selected safety-sensitive cases 5 independent times as already defined by A4.
-
-## 9. Open contradiction before Ready
+## 10. Open contradiction before Ready
 
 Merged A2/A3 still describe the earlier operator minimum ending:
 
@@ -207,28 +163,20 @@ Merged A2/A3 still describe the earlier operator minimum ending:
 identity → model → installation → operation → problem description
 ```
 
-The accepted A4 operator contract adds:
+A4 now refines this to conditional element identification. A2/A3 drift must be reconciled before Ready; A4 must not silently rewrite merged history.
+
+## 11. Current stop point
 
 ```text
-element type
-exact element reference
-```
-
-and clarifies full identity. This A2/A3 drift must be reconciled before Ready. The Procedures refactor does not silently rewrite merged A2/A3.
-
-## 10. Current stop point
-
-```text
-A4_ISSUE: OPEN
-A4_PR: DRAFT
-A4_PROCEDURES_REFACTOR: AUTHORIZED
-REPOSITORY_CANDIDATE: PREPARED
-PROVIDER_V2_LOAD: NOT_YET_DONE
-POST_REFACTOR_RUNTIME_TESTS: NOT_RUN
-CI: NONE ON CURRENT HEAD
+A4_ISSUE: #12 OPEN
+A4_PR: #13 DRAFT
+LATEST_REPOSITORY_TARGET: PREPARED
+LATEST_PROVIDER_LOAD: NOT_YET_DONE
+LATEST_RUNTIME_TESTS: NOT_RUN
+CI: TO_REVALIDATE_ON_CURRENT_HEAD
 A4_OVERALL: NOT_PASS
 READY: NO
 MERGE: NO
 ```
 
-Next action is manual provider loading/publishing of V2 + the two Free-form Procedures in the existing isolated ElevenLabs agent. Do not start A5 and do not change any real BODYSHOP integration.
+No canonical-state update required. Do not start A5.
