@@ -3,28 +3,36 @@
 ## 1. Status
 
 ```text
-A4_REPOSITORY_CONFIGURATION: PREPARED
-ELEVENLABS_SANDBOX_AGENT: NOT_YET_CREATED
-ELEVENLABS_NATIVE_TESTS: NOT_RUN
-AUTHENTICATED_PROVIDER_WRITE: BLOCKED_IN_CURRENT_CHAT_ENVIRONMENT
+A4_ISSUE: #12 OPEN
+A4_PR: #13 DRAFT
+ELEVENLABS_SANDBOX_AGENT: CREATED_AND_PUBLISHED
+CURRENT_PROVIDER_CONFIGURATION: SYSTEM_PROMPT_V1
+PROCEDURES_REFACTOR: AUTHORIZED_BY_ALBERT_2026-09-08
+PROCEDURES_REPOSITORY_CANDIDATE: PREPARED
+PROCEDURES_PROVIDER_LOAD: NOT_YET_DONE
+A4_RUNTIME_RETEST_AFTER_REFACTOR: NOT_RUN
+A4_OVERALL: NOT_PASS
+READY: NO
+MERGE: NO
 ```
 
-A4 is the first provider-runtime block in the isolated `egaracode/bodyshop-voice-poc` laboratory.
+A4 remains strictly inside the isolated public `egaracode/bodyshop-voice-poc` laboratory. BODYSHOP domain semantics remain authoritative over provider behavior.
 
-The objective is to configure one real ElevenLabs sandbox agent for AI Control and execute only the provider-native portion of the merged A3 verification contract.
+The sandbox agent already exists and has produced real ElevenLabs preview evidence. The current repository work now prepares an authorized configuration refactor from one growing system prompt to a short global system prompt plus task-specific ElevenLabs Free-form Procedures.
 
-This document is not evidence that the provider agent already exists. Provider creation and test execution remain pending until an authenticated ElevenLabs write path is available.
+Provider evidence collected before this refactor remains evidence only for the provider configuration that produced it.
 
 ---
 
-## 2. Repository baseline
+## 2. Repository baseline and authority
 
-A4 starts from:
+A4 started from:
 
 ```text
 main = 2650665d60eb91b94eefb82cf13be85e93ac81d8
 Issue = #12
 branch = feat/a4-elevenlabs-sandbox-agent-v1
+PR = #13
 ```
 
 Authoritative inputs:
@@ -32,22 +40,21 @@ Authoritative inputs:
 1. `docs/A2_CONVERSATIONAL_FOUNDATION_V1.md`
 2. `docs/A3_CONVERSATIONAL_VERIFICATION_AND_ELEVENLABS_TEST_CONTRACT_V1.md`
 3. `docs/VOICE_POC_ROADMAP_A2_A6_V1.md`
-4. `README.md`
-5. `elevenlabs/A4_AI_CONTROL_SYSTEM_PROMPT_V1.md`
+4. Issue `#12`, including the authorized Procedures refinement comment
+5. current official ElevenLabs documentation
+6. sanitized provider-runtime evidence in `docs/A4_ELEVENLABS_TEST_EVIDENCE_V1.md`
 
-BODYSHOP semantics remain authoritative over provider behavior.
+Provider configuration must implement BODYSHOP semantics; provider behavior does not redefine them.
 
 ---
 
-## 3. A4 provider boundary
+## 3. Safety boundary
 
-A4 may use ElevenLabs runtime only in an isolated sandbox.
-
-A4 must not connect:
+A4 must not connect or perform:
 
 ```text
 Supabase
-AI-Control-Workshop
+AI-Control-Workshop changes
 BODYSHOP production runtime
 corporate network
 Zello API
@@ -56,132 +63,37 @@ SIP trunk
 Twilio / Exotel / WhatsApp transport
 real BODYSHOP operational webhook
 real state-changing tool
-real worker data
-real operational identifiers
+real worker data in the public repository
+real operational identifiers in the public repository
 ```
 
-A4 does not validate F400, PTT, radio compression, workshop noise or real shared-walkie addressing. Those remain A5 concerns.
+The shared-walkie `addressed to Control` decision remains BODYSHOP-owned and external to ElevenLabs.
 
-The shared-walkie `addressed to Control` gate remains BODYSHOP-owned and external to ElevenLabs.
+A4 provider tests may validate agent behavior only after activation context is supplied. They cannot prove the external walkie activation/non-intervention gate.
+
+A5 still owns F400/PTT/Zello transport, clipping, overlap, radio compression and repeated real acoustic verification. One workshop-noise preview run is useful preliminary evidence only.
 
 ---
 
-## 4. Official ElevenLabs capability baseline
+## 4. Provider configuration observed in A4
 
-Revalidated on 2026-09-04 against current official ElevenLabs documentation.
-
-### 4.1 Agent creation
-
-ElevenLabs currently supports creating/managing agents through:
-
-- Dashboard;
-- API;
-- CLI;
-- hosted MCP server.
-
-Current create-agent endpoint:
+The isolated provider agent has been manually created and published by Albert with:
 
 ```text
-POST /v1/convai/agents/create
+Agent name: AI Control — A4 Sandbox
+Primary conversation: Spanish
+LLM: Qwen3.5-397B-A17B
+Voice: Eric — provisional A4 voice
+Expressive mode: disabled
+Default personality: disabled
+External BODYSHOP tools: none
+Supabase: none
+Phone / SIP / Zello integration: none
+Knowledge base: none
+Production deployment: forbidden
 ```
 
-A4 does not depend on deprecated `enable_versioning`; current documentation states agents are versioned by default and that parameter is ignored.
-
-### 4.2 Agent Testing
-
-Current Agent Testing supports:
-
-```text
-Simulation
-Next Reply (Scenario)
-Tool Call
-Multi-run
-```
-
-Simulation supports:
-
-- chat history;
-- dynamic variables;
-- tool mocking;
-- configurable max turns.
-
-Critical tool-mocking rule for A4:
-
-```text
-mocked tool has no matching mock response
-→ fallback MUST be Finish with error
-→ fallback MUST NOT be Call real tool
-```
-
-System tools and workflow tools are not mocked by Simulation; therefore A4 must not use either category for any hypothetical BODYSHOP state-changing action.
-
-### 4.3 Dynamic variables
-
-Dynamic variables can be used in prompts, messages and tool parameters. A4 uses them to inject safe test context instead of hard-coding real operational data.
-
-### 4.4 Prompt structure
-
-Current ElevenLabs prompting guidance recommends concise, explicit Markdown sections and dedicated guardrails. The repository system prompt follows that structure.
-
-### 4.5 Language / voice
-
-A4 is Spanish-first.
-
-Voice quality, acoustic recognizability and final voice selection are not A4 acceptance criteria. A5 owns real audio validation.
-
----
-
-## 5. Initial agent configuration contract
-
-Provider-side bootstrap target:
-
-| Setting | A4 target |
-|---|---|
-| Agent name | `AI Control — A4 Sandbox` |
-| Template | Blank / minimal agent |
-| Environment | isolated sandbox only |
-| Primary working language | Spanish (`es`) |
-| First message | `Hola, soy AI Control. Dime tu nombre y apellido.` |
-| System prompt | exact content of `elevenlabs/A4_AI_CONTROL_SYSTEM_PROMPT_V1.md` excluding its repository-only header note |
-| LLM | provider-native supported model; start with ElevenLabs current recommended/default unless deliberately changed |
-| Temperature | low-variance target; prefer approximately `0.2` if exposed by the selected model/configuration |
-| Voice | Spanish-capable provider voice; no voice cloning; exact voice is provisional until A5 |
-| Knowledge base | none |
-| External tools | none initially |
-| Phone / SIP / Zello | none |
-| Webhooks | none |
-| Custom LLM / BYOK | none |
-| Production deployment | forbidden |
-
-### 5.1 Why no external tool initially
-
-A4 can prove most A3 semantic behavior with Simulation and Next Reply before introducing any tool.
-
-This gives the safest bootstrap state:
-
-```text
-agent can converse
-+
-agent cannot change BODYSHOP state
-```
-
-Tool Call Testing is therefore initially:
-
-```text
-NOT_RUN
-```
-
-until a separately reviewed sandbox-only, no-impact tool exists.
-
-A4 completion does not require inventing a tool merely to make Tool Call Testing non-empty.
-
----
-
-## 6. Dynamic-variable contract
-
-Use synthetic values only.
-
-Recommended variables:
+Existing runtime dynamic variables remain unchanged:
 
 ```text
 channel_mode
@@ -196,249 +108,241 @@ breakdown_ref
 flow_stage
 ```
 
-Safe example values:
-
-```text
-channel_mode = direct_phone
-activation_verified = true
-caller_role = operator
-known_identity = Operario Demo
-known_model = Modelo Demo
-known_installation = Instalación Demo
-known_operation = Operación Demo
-active_breakdown_count = 1
-breakdown_ref = Avería Demo A
-flow_stage = resolution
-```
-
-Do not use real names, actual plant identifiers, actual model/platform identifiers, real operations or real breakdown references in public fixtures.
+No additional dynamic variable is required merely to collect `element_type` or `element_ref` during an A4 conversation.
 
 ---
 
-## 7. Provider creation procedure
+## 5. Official ElevenLabs capability baseline — revalidated 2026-09-08
 
-When authenticated ElevenLabs access is available:
+Current official ElevenLabs documentation states:
 
-1. Sign in to the intended ElevenLabs sandbox/workspace.
-2. Create a new agent from a Blank/minimal template.
-3. Name it `AI Control — A4 Sandbox`.
-4. Set Spanish as the working language.
-5. Configure the first message defined above.
-6. Paste the repository system prompt.
-7. Keep knowledge base empty.
-8. Keep all external tools/integrations empty.
-9. Keep phone/SIP/Zello integrations empty.
-10. Use a low-variance LLM setting; record the exact model and temperature actually saved.
-11. Use a normal Spanish-capable provider voice only as a provisional A4 voice; record it without treating audio quality as validated.
-12. Save the agent.
-13. Verify that no external state-changing integration appears in the agent configuration.
-14. Record a sanitized configuration snapshot in this document or a follow-up evidence document.
+- Procedures contain task-specific instructions and load when their trigger matches the conversation.
+- Free-form Procedures are intended for tasks where wording/order may adapt and unexpected turns can occur.
+- Structured Procedures run typed steps in a fixed sequence.
+- Global tone, identity, refusal policies and guardrails belong in the system prompt; task-specific steps belong in Procedures.
+- Procedure content is capped at 50,000 characters.
+- Procedures version together with the agent when published.
+- Concrete, disjoint triggers reduce incorrect procedure selection.
+- The Dashboard is the recommended interactive authoring path.
 
-Do not commit:
+Official references:
 
-- API keys;
-- secrets;
-- full provider credentials;
-- authentication tokens;
-- real worker/customer data;
-- real BODYSHOP operational data.
+- https://elevenlabs.io/docs/eleven-agents/customization/procedures
+- https://elevenlabs.io/docs/eleven-agents/customization/procedures/free-form-procedures
+- https://elevenlabs.io/docs/eleven-agents/customization/procedures/structured-procedures
+- https://elevenlabs.io/docs/eleven-agents/best-practices/prompting-guide
+- https://elevenlabs.io/docs/eleven-agents/customization/personalization/dynamic-variables
 
-Because this repository is public, the full provider resource identifier should remain outside the repository unless there is a demonstrated need to publish it. A sanitized fingerprint/reference is sufficient for repository evidence.
+### Why Free-form now
+
+The operator flow has a preferred order but must also support:
+
+```text
+corrections
+multiple clear fields in one utterance
+out-of-order useful information
+explicit uncertainty
+focused clarification
+natural workshop language
+```
+
+That variability fits Free-form Procedures better than a rigid fixed sequence for the current A4/Qwen configuration.
+
+Structured Procedures remain a future candidate if the BODYSHOP contract later requires fixed typed steps and the selected model/provider behavior is independently validated.
 
 ---
 
-## 8. A4 native test subset
+## 6. Authorized A4 Procedures architecture
 
-A4 should execute the provider-native portion of A3. Adapter-owned and A5-only tests remain `NOT_RUN`.
-
-### 8.1 Simulation targets
-
-| A3 ID | A4 objective |
-|---|---|
-| `OP-02` | guided operator flow retains required fields |
-| `OP-03` | multiple fields in one utterance are retained |
-| `OP-05` | clear correction supersedes prior value safely |
-| `OP-06` | incomplete context causes no irreversible claim/action |
-| `TECH-01` | `puedes cerrar` -> pre-close semantics, not final close |
-| `TECH-02` | unique pronoun reference may continue without redundant confirmation |
-| `TECH-04` | `en marcha` interpreted only in correct technician resolution context |
-| `TECH-05` | `solucionada` interpreted only in correct technician resolution context |
-| `TECH-06` | multiple plausible breakdowns -> clarify |
-| `TECH-08` | never claim final technical closure |
-| `TECH-09` | operator `solucionada` does not inherit technician pre-close semantics |
-| `SES-01` | active-session immediate follow-up does not require repeated `Control` |
-| recovery scenario | three unresolved attempts -> human-Control fallback semantics |
-
-### 8.2 Next Reply targets
-
-Prioritize narrow response-policy assertions:
-
-- `OP-04`: ask only for the ambiguous/missing field;
-- `WA-03`: after externally supplied activation context, `Control me recibes?` produces acknowledgement only;
-- `TECH-07`: clarify exact breakdown only;
-- `TECH-08`: reply must distinguish pre-close from final closure;
-- second recovery attempt: clearer reformulation rather than repeating identical wording.
-
-### 8.3 Adapter-owned cases
-
-The following remain outside provider-native PASS:
+The authorized provider target is now:
 
 ```text
-WA-05
-WA-06
-WA-07
-WA-08
-WA-09 activation decision itself
+GLOBAL SYSTEM PROMPT
+→ role / Spanish voice style
+→ sandbox / no-real-action boundary
+→ runtime context variables
+→ channel activation boundary
+→ global confirmation/recovery
+→ global guardrails
+
+FREE-FORM PROCEDURE — Operator breakdown
+→ seven-field operator collection contract
+→ identity completeness
+→ slot boundaries
+→ correction semantics
+→ multi-slot retention
+→ uncertainty remains UNCONFIRMED
+→ neutral clarification
+→ sandbox completion
+
+FREE-FORM PROCEDURE — Technician pre-close
+→ technician resolution semantics
+→ REQUEST_PRE_CLOSE phrases
+→ exact-breakdown ambiguity
+→ role isolation
+→ PRE-CLOSE != final technical closure
+→ sandbox semantic response
 ```
 
-They require the future BODYSHOP activation/non-intervention adapter and must remain:
+Repository candidate assets:
 
-```text
-NOT_RUN / ADAPTER_TEST_REQUIRED
-```
+- `elevenlabs/A4_AI_CONTROL_SYSTEM_PROMPT_V2.md`
+- `elevenlabs/A4_OPERATOR_BREAKDOWN_PROCEDURE_V1.md`
+- `elevenlabs/A4_TECHNICIAN_PRE_CLOSE_PROCEDURE_V1.md`
 
-### 8.4 A5-owned cases
-
-Any claim involving real:
-
-```text
-F400
-PTT
-Zello transport
-factory noise
-overlapping speakers
-radio compression
-real acoustic addressing
-```
-
-remains:
-
-```text
-NOT_RUN / A5_REAL_AUDIO_REQUIRED
-```
+`elevenlabs/A4_AI_CONTROL_SYSTEM_PROMPT_V1.md` remains historical evidence for the prior tested prompt architecture and must not be silently rewritten into V2.
 
 ---
 
-## 9. Multi-run calibration
+## 7. Operator contract carried into the Procedure
 
-A3 intentionally deferred exact repetition counts to A4.
-
-Initial A4 proposal:
-
-- execute each selected native test once while stabilizing configuration;
-- after no deterministic failure remains, run the most safety-sensitive native scenarios **5 independent times**;
-- treat any hard-invariant violation in any run as BODYSHOP `FAIL` even when provider aggregate scoring is favorable.
-
-Priority 5x candidates:
+Preferred guided sequence:
 
 ```text
-OP-06 incomplete context / no operational claim
+identity: name + at least one surname
+→ model
+→ installation
+→ operation
+→ element type
+→ exact element reference
+→ problem description
+```
+
+The flow is guided, not rigidly one-value-per-utterance.
+
+If the operator voluntarily supplies several clear fields, AI Control retains them and asks only for what remains missing.
+
+A clear correction supersedes the previous value.
+
+Critical data rule discovered through provider testing:
+
+```text
+VALUE HEARD != VALUE CONFIRMED
+
+explicit doubt
+→ UNCONFIRMED
+→ ask only for confirmation/correction
+→ do not progress
+```
+
+Expressions such as `creo`, `puede ser`, `posiblemente`, `no estoy seguro` or equivalent must not be promoted to confirmed operational data merely to keep the conversation moving.
+
+---
+
+## 8. Technician contract carried into the Procedure
+
+Inside verified technician + active breakdown + resolution context, these expressions may represent:
+
+```text
+BREAKDOWN SOLVED + REQUEST_PRE_CLOSE
+```
+
+Examples:
+
+```text
+puedes cerrar
+la puedes cerrar
+ciérrala
+en marcha
+está en marcha
+avería solucionada
+solucionada
+```
+
+Critical rule:
+
+```text
+technician "cerrar"
+→ REQUEST_PRE_CLOSE
+!= final technical closure
+```
+
+If exactly one active breakdown is unambiguous, unnecessary confirmation is avoided. If several are plausible, AI Control asks which one and never chooses.
+
+The same keywords used by an operator do not inherit technician PRE-CLOSE semantics.
+
+---
+
+## 9. Provider migration procedure
+
+Do not modify the provider until the repository candidate is reviewed.
+
+After repository review, Albert may migrate the existing sandbox agent without creating a second agent:
+
+1. Keep the same isolated agent, model, voice and current 10 dynamic variables.
+2. Replace the current provider system prompt with `A4_AI_CONTROL_SYSTEM_PROMPT_V2.md` content excluding its repository-only header note.
+3. Create a **Free-form Procedure** named `Operator breakdown`.
+4. Use the exact trigger/content from `A4_OPERATOR_BREAKDOWN_PROCEDURE_V1.md`.
+5. Create a **Free-form Procedure** named `Technician pre-close`.
+6. Use the exact trigger/content from `A4_TECHNICIAN_PRE_CLOSE_PROCEDURE_V1.md`.
+7. Do not add tools, Knowledge Base, phone/SIP/Zello, Supabase or any real integration.
+8. Publish the agent changes once all three configuration assets match the repository candidate.
+9. Record publication as manual provider evidence.
+10. Treat all earlier provider runtime tests as evidence for the old V1 prompt configuration only.
+
+---
+
+## 10. A4 verification target after migration
+
+Provider-native A3 scenarios remain the target, including:
+
+```text
+OP-02 guided operator collection
+OP-03 multi-slot retention
+OP-04 focused clarification
+OP-05 correction
+OP-06 incomplete context / no irreversible claim
+TECH-01 / TECH-02 / TECH-04 / TECH-05 pre-close semantics
 TECH-06 multiple breakdown ambiguity
 TECH-08 no final technical closure
 TECH-09 role/context isolation
-three-attempt fallback
+SES-01 active-session continuity
+three-attempt recovery / human fallback
 ```
 
-This is an A4 laboratory baseline, not a production SLA.
+The Procedures refactor does not reduce acceptance criteria. It requires regression testing because the provider configuration changes materially.
+
+After deterministic issues are closed, selected safety-sensitive native scenarios still require the agreed multi-run baseline.
 
 ---
 
-## 10. Evidence record
+## 11. Known contract contradiction before Ready
 
-For each executed provider test record:
+Merged A2/A3 still describe the earlier operator minimum ending:
 
 ```text
-A3 scenario ID
-test type
-sanitized agent/config reference
-exact provider model
-model temperature / relevant settings
-language
-safe dynamic variables
-run/invocation identifier where publishable
-number of independent runs
-result per run
-provider rationale
-BODYSHOP verdict
-forbidden behavior observed: yes/no
-real tool reachable: must be no
+identity → model → installation → operation → problem description
 ```
 
-If the agent configuration changes materially, previous provider-specific evidence must be treated as evidence for the old configuration.
-
----
-
-## 11. A4 PASS/FAIL rules
-
-A4 can be `PASS` only if:
-
-- a real isolated ElevenLabs sandbox agent exists;
-- its saved configuration matches this contract or any explicitly reviewed revision;
-- no real BODYSHOP action/integration is reachable;
-- the selected A3 provider-native tests have been executed;
-- the safety-critical native scenarios pass the agreed multi-run baseline;
-- no test falsely claims adapter/audio evidence;
-- no secret or real operational data is committed.
-
-A4 is `FAIL` if any run:
-
-- claims final technical closure from technician pre-close wording;
-- chooses an ambiguous breakdown;
-- guesses unresolved critical data;
-- produces or reaches a real state-changing integration;
-- hides an adapter/audio requirement behind an ElevenLabs Simulation PASS.
-
-A4 remains `BLOCKED`, not `FAIL`, when authenticated provider access is unavailable before actual creation/testing.
-
----
-
-## 12. Current blocker
-
-The current ChatGPT tool environment provides GitHub and web research but no authenticated ElevenLabs connector/account write tool.
-
-Plugin discovery performed during A4 bootstrap did not return an ElevenLabs connector.
-
-Therefore:
+A4 provider testing has accepted and implemented the refined operator contract with:
 
 ```text
-repository-side configuration = possible
-real ElevenLabs create/update/test = currently blocked
+element type + exact element reference
 ```
 
-Do not substitute Retell, Pathors or another provider: A4 is specifically an ElevenLabs validation block.
+and explicit identity completeness.
 
-Do not paste an ElevenLabs API key into GitHub or this public repository.
-
----
-
-## 13. Official references
-
-Revalidated 2026-09-04:
-
-- ElevenLabs — Quickstart: https://elevenlabs.io/docs/eleven-agents/quickstart/
-- ElevenLabs — Create agent API: https://elevenlabs.io/docs/eleven-agents/api-reference/agents/create
-- ElevenLabs — Agent Testing: https://elevenlabs.io/docs/eleven-agents/customization/agent-testing
-- ElevenLabs — Prompting guide: https://elevenlabs.io/docs/eleven-agents/best-practices/prompting-guide
-- ElevenLabs — Dynamic variables: https://elevenlabs.io/docs/eleven-agents/customization/personalization/dynamic-variables
-- ElevenLabs — Conversation flow: https://elevenlabs.io/docs/eleven-agents/customization/conversation-flow
-- ElevenLabs — Language: https://elevenlabs.io/docs/eleven-agents/customization/voice/customization/language
-- ElevenLabs — LLM models/configuration: https://elevenlabs.io/docs/eleven-agents/customization/llm
+This A2/A3 drift remains unresolved. It must be reconciled before A4 can be Ready. The Procedures refactor does not silently rewrite merged A2/A3.
 
 ---
 
-## 14. Stop point
-
-Current state:
+## 12. Current stop point
 
 ```text
-A4_ISSUE: OPEN
-A4_REPOSITORY_CONFIG: PREPARED
-A4_PROVIDER_AGENT: BLOCKED_ON_AUTHENTICATED_WRITE
-A4_TEST_EXECUTION: NOT_RUN
+ISSUE: #12 OPEN
+BRANCH: feat/a4-elevenlabs-sandbox-agent-v1
+PR: #13 DRAFT
+PROVIDER_AGENT: EXISTS
+CURRENT_PROVIDER_RUNTIME: SYSTEM_PROMPT_V1
+PROCEDURES_CANDIDATE: PREPARED_IN_REPOSITORY
+PROCEDURES_PUBLISHED: NO
+POST_REFACTOR_TESTS: NOT_RUN
+A2_A3_SYNC: REQUIRED_BEFORE_READY
+A4_OVERALL: NOT_PASS
 READY: NO
 MERGE: NO
 ```
 
-Next action is not A5.
+Exact next action: review the repository candidate assets, then load/publish the short system prompt plus the two Free-form Procedures in the existing ElevenLabs sandbox agent. Stop before claiming any post-refactor PASS until new provider evidence exists.
 
-Next action is to establish a safe authenticated ElevenLabs write path, create the A4 sandbox agent from this contract, execute the provider-native tests and then update the same A4 branch with evidence before Ready review.
+No canonical-state update required.
