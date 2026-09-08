@@ -126,3 +126,5 @@ problem_description
 ```
 
 PASS requires each clear slot retained correctly, only the next missing/uncertain slot requested, explicit uncertainty left unresolved, element type and exact reference kept distinct, corrections replacing prior values safely, spontaneous multi-slot information retained, and no real BODYSHOP action claimed.
+
+Current stop point: repository candidate prepared; provider runtime still V1; V2 + Procedures not yet published; post-refactor runtime tests not run; A4 not Ready.
