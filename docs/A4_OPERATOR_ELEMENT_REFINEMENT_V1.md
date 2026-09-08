@@ -4,7 +4,7 @@
 
 ```text
 A4_OPERATOR_ELEMENT_REFINEMENT: ACCEPTED_BY_ALBERT
-DATE: 2026-09-04
+A4_PROCEDURES_REFACTOR: AUTHORIZED
 ```
 
 This document records the A4 product refinement discovered during live ElevenLabs sandbox testing.
@@ -16,7 +16,7 @@ It does not authorize SQL, Supabase, AI-Control-Workshop changes, production per
 AI Control should guide the operator through this preferred sequence:
 
 ```text
-identity (name + at least one surname)
+identity
 → model
 → installation
 → operation
@@ -37,14 +37,13 @@ If the operator spontaneously supplies several clear fields in one utterance, AI
 
 AI Control must not collapse `element_type` and `element_ref` into one slot when the exact element is still unresolved.
 
-After learning the element type, the next question should adapt naturally, for example `¿Qué robot es?`, `¿Qué motor es?`, `¿Qué brida es?` or `¿Qué pinza es?`.
+After learning the element type, the next question should adapt naturally, for example `¿Qué robot es?`, `¿Qué motor es?` or `¿Qué brida es?`.
 
 ## 4. Slot boundary
 
 The operator slots are distinct:
 
 ```text
-identity
 model
 installation
 operation
@@ -53,13 +52,22 @@ element_ref
 problem_description
 ```
 
-Identity is complete only when name + at least one surname are present.
-
 A problem narrative must not silently satisfy `operation`; an activity description must not silently satisfy `operation`; an operation-like value must not silently satisfy `installation`; a generic element type must not silently satisfy the exact element reference; ambiguous cross-slot answers require focused clarification rather than guessing.
 
-An unclear value must not be described as probably belonging to another slot before clarification.
+## 5. Explicit uncertainty invariant
 
-## 5. Conceptual persistence hierarchy
+A value being heard does not make it confirmed.
+
+```text
+VALUE HEARD != VALUE CONFIRMED
+explicit doubt → UNCONFIRMED → clarify only that value → do not progress
+```
+
+Expressions semantically equivalent to `creo`, `puede ser`, `posiblemente` or `no estoy seguro` must keep the current critical value unresolved until the caller confirms or corrects it.
+
+This is a domain-quality rule, not a phrase-specific patch.
+
+## 6. Conceptual persistence hierarchy
 
 The conversational data should be compatible with the future conceptual workshop hierarchy:
 
@@ -75,29 +83,37 @@ MODEL
 
 This is a conversational/domain requirement only. It is not evidence of an existing SQL schema and does not authorize SQL or persistence changes.
 
-## 6. ElevenLabs state handling
+## 7. ElevenLabs state handling
 
 `element_type` and `element_ref` are collected during the conversation and do not need to be custom dynamic variables for A4.
 
-ElevenLabs dynamic variables are used here only for context injected into the session, such as channel mode, caller role and already-known external context.
+The existing 10 ElevenLabs dynamic variables remain unchanged and are used only for session/runtime context.
 
 The operator-provided element type/reference may remain in ordinary conversation context during A4 testing.
 
-A future implementation may choose a structured state mechanism or post-conversation data extraction if machine-readable persistence is required, but that is not authorized or required by this A4 refinement.
+## 8. Procedures architecture
 
-No real element identifiers may be committed to this public repository.
+The accepted operator task-specific rules now live in the repository candidate:
 
-## 7. Contract impact
+`elevenlabs/A4_OPERATOR_BREAKDOWN_PROCEDURE_V1.md`
+
+The global agent rules live in:
+
+`elevenlabs/A4_AI_CONTROL_SYSTEM_PROMPT_V2.md`
+
+This refactor does not change BODYSHOP semantic authority and is not provider-runtime evidence until V2 + Procedures are loaded/published and retested.
+
+## 9. Contract impact
 
 Merged A2 currently defines the earlier minimum operator sequence `identity → model → installation → operation → problem description` and merged A3 `OP-02` / `OP-03` currently verify that earlier field set.
 
-Albert's accepted A4 refinement adds identity completeness plus `element_type` and `element_ref` between operation and problem description.
+Albert's accepted A4 refinement adds `element_type` and `element_ref` between operation and problem description and clarifies full identity and explicit-uncertainty handling.
 
-Before A4 can be considered Ready, repository documentation must be reconciled so the active provider prompt, verification evidence and upstream A2/A3 operator contract do not contradict one another.
+Before A4 can be considered Ready, repository documentation must be reconciled so the active provider configuration, verification evidence and upstream A2/A3 operator contract do not contradict one another.
 
-## 8. Retest consequence
+## 10. Retest consequence
 
-The next operator retest should preserve the guided style and verify:
+After publishing V2 + Procedures, the operator retest should verify:
 
 ```text
 identity
@@ -109,4 +125,4 @@ element_ref
 problem_description
 ```
 
-PASS requires identity completeness, each slot retained correctly, only the next missing/uncertain slot requested, element type and exact reference kept distinct, ambiguous values clarified neutrally without cross-slot speculation, final problem description not overwriting another slot, and no real BODYSHOP action claimed.
+PASS requires each clear slot retained correctly, only the next missing/uncertain slot requested, explicit uncertainty left unresolved, element type and exact reference kept distinct, corrections replacing prior values safely, spontaneous multi-slot information retained, and no real BODYSHOP action claimed.
