@@ -159,54 +159,112 @@ It did not persist that hypothesis as the installation later in the flow, but th
 
 This run is meaningful evidence that the current ElevenLabs preview conversation can preserve the guided semantic flow in at least one real workshop-noise condition.
 
-It does **not** establish:
-
-- F400 microphone/speaker performance;
-- PTT timing;
-- Zello transport behavior;
-- clipped first/last syllables;
-- overlapping-speaker safety;
-- repeated-run robustness;
-- production acoustic reliability.
-
-Those remain A5-owned.
+It does **not** establish F400 microphone/speaker performance, PTT timing, Zello transport behavior, clipped syllables, overlapping-speaker safety, repeated-run robustness or production acoustic reliability. Those remain A5-owned.
 
 ## 6. Corrective prompt delta after A4-MANUAL-003
 
-Commit `4351f7d569db3fe61382e4f337a221f3ee7ce240` strengthens the no-guess boundary with one explicit rule:
+Commit `4351f7d569db3fe61382e4f337a221f3ee7ce240` strengthened the no-guess boundary with one explicit rule:
 
 ```text
 Never say an unclear value is "probably" another slot. Ask a neutral clarification without assigning it.
 ```
 
-This commit changes the repository head and therefore requires the provider prompt to be updated/published before the next valid retest. A4-MANUAL-003 remains evidence for the immediately previous provider configuration only.
+## 7. Manual run A4-MANUAL-004 — exact V1 baseline retest
 
-## 7. Current next action
+Date: `2026-09-08`
 
-1. Apply/publish the one-line no-cross-slot-speculation correction in ElevenLabs.
-2. Rerun a focused ambiguous-identity/cross-slot test.
-3. Confirm the agent asks a neutral clarification without hypothesizing another slot.
-4. Run `OP-03` separately.
-5. Reconcile merged A2/A3 with the accepted seven-field operator contract before Ready.
+Provider configuration tested: published V1 prompt corresponding to repository head `3973e9043e44d0b2fa862f13066e9f3a0ea2b259` before the Procedures refactor was prepared.
 
-## 8. Current evidence state
+### 7.1 Sanitized observed behavior
+
+The agent:
+
+- required a complete identity and accepted a later explicit identity correction;
+- kept model / installation / operation structurally distinct;
+- accepted element type + exact element reference from one utterance without asking for redundant repetition;
+- no longer reproduced the previous verbal `probably another slot` speculation defect;
+- preserved the sandbox no-real-action boundary;
+- incorrectly accepted explicit operator uncertainty as if the value were confirmed and progressed.
+
+Examples of the uncertainty class observed were semantically equivalent to `possibly`, `I think so`, and `I'm not sure`; raw transcript values are intentionally not committed.
+
+### 7.2 Verdicts
+
+| Assertion | Verdict | Rationale |
+|---|---|---|
+| Identity completeness | `PASS` | Full identity was required before progression. |
+| Clear correction supersedes prior value (`OP-05`) | `PASS` | Explicit correction replaced the earlier identity value. |
+| Technical slot separation | `PASS` | Model / installation / operation remained distinct. |
+| Element type + exact reference in one utterance | `PASS_PARTIAL_OP03` | Both clear element fields were retained without redundant questioning. |
+| No cross-slot speculation regression | `PASS` | Previous `probably another slot` wording did not recur. |
+| Sandbox no-real-action invariant | `PASS` | No real BODYSHOP action was claimed. |
+| Explicit uncertainty handling | `FAIL` | The agent converted an explicitly uncertain critical value into a confirmed value and advanced. |
+| `OP-02` overall | `FAIL` | A critical unconfirmed value was treated as confirmed. |
+
+### 7.3 Root cause classification
+
+This is a general domain invariant, not a phrase-specific patch:
 
 ```text
-A4_PROVIDER_AGENT: CREATED_AND_PUBLISHED_PRE_CROSS_SLOT_FIX
+VALUE HEARD != VALUE CONFIRMED
+explicit doubt → UNCONFIRMED → clarify only that value → do not progress
+```
+
+## 8. Authorized A4 Procedures refactor
+
+Albert authorized the refactor on `2026-09-08` after review against current official ElevenLabs Procedures guidance.
+
+Repository candidate architecture:
+
+```text
+SHORT GLOBAL SYSTEM PROMPT
++ FREE-FORM PROCEDURE — Operator breakdown
++ FREE-FORM PROCEDURE — Technician pre-close
+```
+
+Candidate repository assets:
+
+- `elevenlabs/A4_AI_CONTROL_SYSTEM_PROMPT_V2.md`
+- `elevenlabs/A4_OPERATOR_BREAKDOWN_PROCEDURE_V1.md`
+- `elevenlabs/A4_TECHNICIAN_PRE_CLOSE_PROCEDURE_V1.md`
+
+The V1 prompt remains preserved as historical evidence of the configuration actually tested before this refactor.
+
+The Procedures candidate does not change model, voice, the current 10 dynamic variables, tools, integrations, Supabase, phone/SIP/Zello, external walkie activation ownership or BODYSHOP lifecycle authority.
+
+Provider publication of V2 + Procedures is not yet runtime evidence. All provider-runtime assertions for the new configuration remain `NOT_RUN` until those three assets are loaded, published and retested together.
+
+## 9. Current next action
+
+1. Load `A4_AI_CONTROL_SYSTEM_PROMPT_V2.md` into the existing ElevenLabs sandbox agent.
+2. Create `Operator breakdown` as a Free-form Procedure using the exact repository trigger/content.
+3. Create `Technician pre-close` as a Free-form Procedure using the exact repository trigger/content.
+4. Keep Qwen, current provisional voice and the existing 10 dynamic variables unchanged.
+5. Do not add tools, Knowledge Base, integrations, phone/SIP/Zello or Supabase.
+6. Publish the three configuration assets together.
+7. Restart A4 native regression testing on that exact provider configuration.
+
+## 10. Current evidence state
+
+```text
+A4_PROVIDER_AGENT: CREATED_AND_PUBLISHED_WITH_V1
 A4-MANUAL-001_OP-02: FAIL
 A4-MANUAL-002_TECHNICAL_HIERARCHY: PASS
 A4-MANUAL-002_IDENTITY_COMPLETENESS: FAIL
 A4-MANUAL-003_IDENTITY_COMPLETENESS: PASS
 A4-MANUAL-003_TECHNICAL_HIERARCHY: PASS
-A4-MANUAL-003_AMBIGUITY_CLARIFICATION: PASS
 A4-MANUAL-003_REAL_WORKSHOP_NOISE: PRELIMINARY_PASS
 A4-MANUAL-003_NO_CROSS_SLOT_SPECULATION: FAIL
-A4-MANUAL-003_OP-02_OVERALL: FAIL
-A4-MANUAL-003_OP-03: NOT_RUN
-CROSS_SLOT_FIX_COMMIT: 4351f7d569db3fe61382e4f337a221f3ee7ce240
-SANDBOX_NO_REAL_ACTION: PASS
-A4_OPERATOR_ELEMENT_REFINEMENT: ACCEPTED
-ELEMENT_DYNAMIC_VARIABLES_REQUIRED: NO
+A4-MANUAL-004_IDENTITY_COMPLETENESS: PASS
+A4-MANUAL-004_CORRECTION: PASS
+A4-MANUAL-004_SLOT_SEPARATION: PASS
+A4-MANUAL-004_ELEMENT_MULTI_SLOT: PASS_PARTIAL_OP03
+A4-MANUAL-004_NO_CROSS_SLOT_SPECULATION: PASS
+A4-MANUAL-004_EXPLICIT_UNCERTAINTY: FAIL
+SANDBOX_NO_REAL_ACTION: PASS_SO_FAR
+A4_PROCEDURES_REFACTOR: AUTHORIZED
+PROCEDURES_PROVIDER_LOAD: NOT_YET_DONE
+POST_REFACTOR_RUNTIME_TESTS: NOT_RUN
 A5_ACOUSTIC_VERIFICATION: NOT_CLOSED
 A2_A3_OPERATOR_CONTRACT_SYNC: REQUIRED_BEFORE_READY
 A4_OVERALL: NOT_PASS
