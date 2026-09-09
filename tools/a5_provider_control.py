@@ -63,7 +63,7 @@ def path_is_allowlisted(path: str) -> bool:
         and parts[4] == "branches"
         and parts[5]
         and parts[6] == "procedures"
-        and (len(parts) == 7 or bool(parts[7]))
+        and (len(parts) == 7 or (bool(parts[7]) and parts[7] != "compile"))
     ):
         return True
     if len(parts) == 3 and parts[:2] == ["v1", "voices"] and parts[2]:
