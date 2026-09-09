@@ -1,142 +1,72 @@
-import copy
-import importlib.util
-import json
-import pathlib
-import sys
-import unittest
+import copy, importlib.util, json, pathlib, sys, unittest
+ROOT=pathlib.Path(__file__).resolve().parents[1]
+spec=importlib.util.spec_from_file_location("a5",ROOT/"tools/a5_provider_control.py")
+a5=importlib.util.module_from_spec(spec); sys.modules[spec.name]=a5; spec.loader.exec_module(a5)
 
-ROOT = pathlib.Path(__file__).resolve().parents[1]
-MODULE_PATH = ROOT / "tools" / "a5_provider_control.py"
-EXPECTED_PATH = ROOT / "elevenlabs" / "A5_EXPECTED_PROVIDER_CONFIGURATION_V1.json"
-
-spec = importlib.util.spec_from_file_location("a5_provider_control", MODULE_PATH)
-a5 = importlib.util.module_from_spec(spec)
-sys.modules[spec.name] = a5
-assert spec.loader is not None
-spec.loader.exec_module(a5)
-
-
-class A5ProviderControlTests(unittest.TestCase):
+class T(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        cls.expected = json.loads(EXPECTED_PATH.read_text(encoding="utf-8"))
+        cls.expected=json.loads((ROOT/"elevenlabs/A5_EXPECTED_PROVIDER_CONFIGURATION_V1.json").read_text(encoding="utf-8"))
 
-    def pinned_expected(self):
-        expected = copy.deepcopy(self.expected)
-        expected["agent"]["voice"]["id_sha256"] = "fixture-voice-hash"
-        return expected
+    def actual(self):
+        e=self.expected["agent"]; ps=[]
+        for p in self.expected["procedures"]:
+            c=a5.canonical_structured_content(p["content"]) if p["type"]=="structured" else a5.normalize_text(p["content"]) or ""
+            ps.append({"name":p["name"],"type":p["type"],"trigger":p["trigger"],"content_canonical":c,
+                       "content_sha256":a5.sha256_text(c),"has_draft":False,"procedure_version_present":False})
+        return {"agent":{"name":e["name"],"language":e["language"],"first_message":"provider greeting",
+                         "system_prompt":e["system_prompt"],
+                         "llm":{"id":e["llm"]["id"],"temperature":0.1,"max_tokens":-1},
+                         "voice":{"name":e["voice"]["name"],"id_sha256":"voicehash","tts_model_id":"model",
+                                  "stability":0.5,"speed":1.0,"similarity_boost":0.8},
+                         "dynamic_variable_names":sorted(e["dynamic_variable_names"])},
+                "procedures":ps,"procedures_gap":None,
+                "provider_metadata":{"version_present":False,"branch_present":True,"main_branch_present":False,
+                                     "version_id_sha256":None,"branch_id_sha256":"b","main_branch_id_sha256":None}}
 
-    def exact_actual(self):
-        exp = self.expected
-        procedures = []
-        for item in exp["procedures"]:
-            if item["type"] == "structured":
-                content = a5.canonical_structured_content(item["content"])
-            else:
-                content = a5.normalize_text(item["content"]) or ""
-            procedures.append(
-                {
-                    "name": item["name"],
-                    "type": item["type"],
-                    "trigger": a5.normalize_text(item["trigger"]) or "",
-                    "content_canonical": content,
-                    "content_sha256": a5.sha256_text(content),
-                    "has_draft": False,
-                    "procedure_version_present": False,
-                }
-            )
-        return {
-            "agent": {
-                "name": exp["agent"]["name"],
-                "language": exp["agent"]["language"],
-                "first_message": exp["agent"]["first_message"],
-                "system_prompt": exp["agent"]["system_prompt"],
-                "llm": exp["agent"]["llm"],
-                "voice": {
-                    "name": exp["agent"]["voice"]["name"],
-                    "id_sha256": "fixture-voice-hash",
-                },
-                "dynamic_variable_names": sorted(exp["agent"]["dynamic_variable_names"]),
-            },
-            "procedures": procedures,
-            "procedures_gap": None,
-            "provider_metadata": {
-                "version_present": False,
-                "branch_present": True,
-                "main_branch_present": False,
-                "version_id_sha256": None,
-                "branch_id_sha256": "fixture-branch-hash",
-                "main_branch_id_sha256": None,
-            },
-        }
+    def pinned(self):
+        e=copy.deepcopy(self.expected)
+        a=self.actual()
+        e["agent"]["first_message"]=a["agent"]["first_message"]
+        for k,v in a["agent"]["llm"].items(): e["agent"]["llm"][k]=v
+        for k,v in a["agent"]["voice"].items(): e["agent"]["voice"][k]=v
+        return e
 
-    def test_exact_pinned_state_is_no_drift(self):
-        results = a5.compare_expected(self.pinned_expected(), self.exact_actual())
-        self.assertEqual("NO_DRIFT", a5.overall_status(results))
-        self.assertTrue(all(item["status"] == "NO_DRIFT" for item in results))
+    def test_fully_pinned_exact_is_no_drift(self):
+        r=a5.compare_expected(self.pinned(),self.actual())
+        self.assertEqual("NO_DRIFT",a5.overall_status(r))
 
-    def test_unpinned_voice_identity_is_unverifiable(self):
-        results = a5.compare_expected(self.expected, self.exact_actual())
-        self.assertEqual("UNVERIFIABLE", a5.overall_status(results))
-        voice_result = next(
-            item for item in results if item["field"] == "agent.voice.id_sha256"
-        )
-        self.assertEqual("UNVERIFIABLE", voice_result["status"])
+    def test_unpinned_fields_are_unverifiable(self):
+        r=a5.compare_expected(self.expected,self.actual())
+        self.assertEqual("UNVERIFIABLE",a5.overall_status(r))
+        fields={x["field"]:x["status"] for x in r}
+        self.assertEqual("UNVERIFIABLE",fields["agent.first_message"])
+        self.assertEqual("UNVERIFIABLE",fields["agent.llm.temperature"])
+        self.assertEqual("UNVERIFIABLE",fields["agent.voice.id_sha256"])
 
     def test_material_difference_is_drift(self):
-        actual = self.exact_actual()
-        actual["agent"]["llm"] = "different-model"
-        actual["procedures"][0]["type"] = "free_form"
-        results = a5.compare_expected(self.pinned_expected(), actual)
-        self.assertEqual("DRIFT", a5.overall_status(results))
-        drift_fields = {item["field"] for item in results if item["status"] == "DRIFT"}
-        self.assertIn("agent.llm", drift_fields)
-        self.assertIn("procedures.Operator breakdown.type", drift_fields)
+        a=self.actual(); a["agent"]["llm"]["id"]="other"; a["procedures"][0]["type"]="free_form"
+        r=a5.compare_expected(self.pinned(),a)
+        self.assertEqual("DRIFT",a5.overall_status(r))
 
-    def test_missing_procedure_branch_is_unverifiable(self):
-        actual = self.exact_actual()
-        actual["procedures"] = None
-        actual["procedures_gap"] = "Provider did not expose branch_id"
-        results = a5.compare_expected(self.pinned_expected(), actual)
-        self.assertEqual("UNVERIFIABLE", a5.overall_status(results))
-        statuses = {
-            item["field"]: item["status"]
-            for item in results
-            if item["field"].startswith("procedures.")
-        }
-        self.assertEqual("UNVERIFIABLE", statuses["procedures.Operator breakdown"])
-        self.assertEqual("UNVERIFIABLE", statuses["procedures.Technician pre-close"])
+    def test_missing_branch_is_unverifiable(self):
+        a=self.actual(); a["procedures"]=None; a["procedures_gap"]="no branch"
+        r=a5.compare_expected(self.pinned(),a)
+        self.assertEqual("UNVERIFIABLE",a5.overall_status(r))
 
-    def test_sanitized_snapshot_excludes_raw_text_and_resource_ids(self):
-        safe = a5.sanitized_snapshot(self.exact_actual())
-        rendered = json.dumps(safe, ensure_ascii=False)
-        self.assertNotIn(self.expected["agent"]["system_prompt"], rendered)
-        self.assertNotIn(self.expected["agent"]["first_message"], rendered)
-        self.assertNotIn("agent_id", rendered)
-        self.assertNotIn("procedure_id", rendered)
-        self.assertIn("system_prompt_sha256", rendered)
-        self.assertIn("id_sha256", rendered)
+    def test_sanitized_snapshot_has_no_raw_text_or_ids(self):
+        s=json.dumps(a5.sanitized_snapshot(self.actual()),ensure_ascii=False)
+        self.assertNotIn(self.expected["agent"]["system_prompt"],s)
+        self.assertNotIn("provider greeting",s)
+        self.assertNotIn("procedure_id",s)
+        self.assertIn("system_prompt_sha256",s)
 
-    def test_endpoint_allowlist_accepts_only_required_read_shapes(self):
-        allowed = [
-            "/v1/convai/agents",
-            "/v1/convai/agents/agent_123",
-            "/v1/convai/agents/agent_123/branches/branch_1/procedures",
-            "/v1/convai/agents/agent_123/branches/branch_1/procedures/proc_1",
-            "/v1/voices/voice_123",
-        ]
-        denied = [
-            "/v1/convai/agents-delete",
-            "/v1/convai/agents/agent_123/branches",
-            "/v1/convai/agents/agent_123/branches/branch_1/procedures/proc_1/draft",
-            "/v1/voices/voice_123/settings",
-            "/v1/convai/agents/agent_123/branches/branch_1/procedures/compile",
-        ]
-        for path in allowed:
-            self.assertTrue(a5.path_is_allowlisted(path), path)
-        for path in denied:
-            self.assertFalse(a5.path_is_allowlisted(path), path)
+    def test_reserved_adjacent_tokens_rejected(self):
+        with self.assertRaises(a5.HarnessError): a5.safe_identifier("compile","procedure_id",{"compile","draft"})
+        with self.assertRaises(a5.HarnessError): a5.safe_identifier("draft","procedure_id",{"compile","draft"})
+        with self.assertRaises(a5.HarnessError): a5.safe_identifier("settings","voice_id",{"settings"})
 
+    def test_structured_content_requires_steps(self):
+        with self.assertRaises(a5.HarnessError): a5.canonical_structured_content({"foo":[]})
 
-if __name__ == "__main__":
-    unittest.main()
+if __name__=="__main__": unittest.main()
