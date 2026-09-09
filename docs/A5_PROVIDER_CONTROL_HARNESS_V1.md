@@ -59,9 +59,12 @@ Albert authorized A5 to preserve initially:
 
 ```text
 LLM family/model: Qwen3.5-397B-A17B
+ElevenLabs API LLM id: qwen35-397b-a17b
 voice display name: Eric
 dynamic-variable names: exactly 10
 ```
+
+The API identifier is the machine-comparison value. ElevenLabs documents `qwen35-397b-a17b` as the API LLM option for the human-facing Qwen3.5-397B-A17B model, so those two spellings do not represent a model change.
 
 The exact First Message was not specified by A2/A3 or the A5 authority decision. Therefore V1 deliberately leaves it unpinned and reports it `UNVERIFIABLE` while still reading and fingerprinting the provider value.
 
@@ -118,18 +121,24 @@ Current official documentation confirms:
 - Structured Procedure content is JSON-encoded with a `steps` array.
 - `ask`, `tell`, `say` and `branch` are current documented step types; `branch` uses ordered condition arms plus optional fallback.
 - Structured Procedures rely on forced internal tool choice for transitions/completion; major OpenAI, Anthropic, Gemini and Grok families are explicitly supported, while other models may need runtime verification.
-- Versioning is opt-in; A5 must not enable it.
+- The current Create Agent and Update Agent API schemas mark `enable_versioning` / `enable_versioning_if_not_enabled` deprecated and ignored, stating that all agents are versioned.
+
+There is a current official-documentation contradiction: the separate Agent Versioning guide still describes versioning as opt-in, while the June 1, 2026 changelog and current Create/Update Agent API schemas state that all agents are versioned and the enable-versioning parameters are ignored. For A5 API behavior, the current endpoint schemas plus dated changelog are treated as the stronger evidence. A5 performs no provider version or branch mutation in either interpretation.
 
 Official references:
 
 - https://elevenlabs.io/docs/api-reference/authentication
 - https://elevenlabs.io/docs/api-reference/agents/list
 - https://elevenlabs.io/docs/api-reference/agents/get
+- https://elevenlabs.io/docs/api-reference/agents/create
+- https://elevenlabs.io/docs/api-reference/agents/update
 - https://elevenlabs.io/docs/api-reference/agents/procedures/list
 - https://elevenlabs.io/docs/api-reference/agents/procedures/get
 - https://elevenlabs.io/docs/eleven-agents/customization/procedures/structured-procedures
 - https://elevenlabs.io/docs/eleven-agents/operate/versioning
+- https://elevenlabs.io/docs/changelog/2026/6/1
 - https://elevenlabs.io/docs/api-reference/voices/get
+- https://elevenlabs.io/docs/changelog/2026/5/18
 
 The legacy `voices/get-all` documentation is not used by A5.
 
@@ -168,12 +177,12 @@ Properties:
 - adjacent mutation/draft tokens are rejected where relevant;
 - no POST/PATCH/PUT/DELETE;
 - no Publish;
-- no provider versioning or branch mutation;
+- no provider version or branch mutation;
 - HTTP error bodies are never echoed.
 
 Agent selection fails closed unless there is exactly one non-archived agent named `AI Control`.
 
-## 9. Procedure/versioning boundary
+## 9. Procedure/version boundary
 
 Procedures require a provider `branch_id`.
 
@@ -186,7 +195,7 @@ branch_id unavailable
 → no provider mutation
 ```
 
-A5 never enables versioning merely to obtain branch metadata.
+A5 does not call deprecated version-enablement parameters and never creates, publishes, merges, deploys or otherwise mutates provider version/branch state merely to obtain read metadata.
 
 ## 10. Normalization and verdicts
 
@@ -308,7 +317,7 @@ A5 Phase 1 must not silently change model.
 ```text
 ELEVENLABS WRITE
 ELEVENLABS PUBLISH
-ENABLE VERSIONING
+PROVIDER VERSION / BRANCH MUTATION
 CREATE/MERGE/DEPLOY PROVIDER BRANCH
 CONTROLLED CONFIG MUTATION
 PHONE / SIP
@@ -327,6 +336,8 @@ READY / MERGE
 
 Repository-side reader, expected state and deterministic comparison are prepared.
 
-Live authenticated provider inspection remains `NOT_RUN` until the harness is executed in a secure environment containing the ElevenLabs key.
+The first authenticated LIVE read was executed read-only against repository head `c2caf56c869abe83363c8fc769e2bd7ef129caf9` and returned `DRIFT`. That run established real provider drift and also exposed the Qwen display-name/API-id comparison false positive corrected after that head.
+
+Because any expected-state change moves the head and invalidates prior exact-head validation as final evidence, the corrected head must be retested and then re-read read-only before final A5 audit.
 
 No canonical-state update required.
