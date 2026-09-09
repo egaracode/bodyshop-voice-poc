@@ -85,7 +85,7 @@ flow_stage
 
 Variable values/defaults are deliberately not persisted by the harness because they may contain runtime or operational data. A5 V1 compares the variable-name set.
 
-The expected JSON reserves `voice.id_sha256` but leaves it `null` initially. Harness V1 compares the resolved provider voice display name (`Eric`) and does not claim exact voice-resource-ID equivalence. Exact voice identity therefore remains a documented limitation until a sanitized fingerprint is deliberately pinned.
+The expected JSON reserves `voice.id_sha256` but leaves it `null` initially because no exact provider voice resource identifier is authoritative in GitHub. The harness compares the resolved display name (`Eric`) but reports `agent.voice.id_sha256 = UNVERIFIABLE` until a sanitized exact fingerprint is deliberately pinned. Therefore a full `NO_DRIFT` result cannot be claimed solely from a matching display name.
 
 ## 5. Official provider interfaces revalidated 2026-09-09
 
@@ -102,10 +102,11 @@ GET /v1/voices/{voice_id}
 Official documentation establishes that:
 
 - List Agents can search/list agent metadata;
-- Get Agent exposes effective conversation configuration including First Message, system prompt, LLM configuration, TTS/voice configuration, dynamic-variable placeholders and version/branch identifiers where available;
+- Get Agent exposes effective conversation configuration and version/branch identifiers where available;
 - List Procedures exposes Procedure ID, version, name, type, trigger and draft status;
 - Get Procedure exposes Procedure name, type, trigger and full content;
 - Structured Procedure content is a JSON-encoded ordered `steps` document;
+- Structured Procedure `Ask` waits for an appropriate user response and `branch` represents If/else branching;
 - versioning is opt-in and, once enabled, cannot be disabled.
 
 Official references:
@@ -137,11 +138,7 @@ API KEY
 
 Use a dedicated restricted key where the ElevenLabs account UI permits the minimum required scope. ElevenLabs documents scope restrictions, quota restrictions and optional IP allowlisting for API keys.
 
-The harness reads only:
-
-`ELEVENLABS_API_KEY`
-
-from the local process environment.
+The harness reads only `ELEVENLABS_API_KEY` from the local process environment.
 
 If secure authentication cannot be provided without exposing the key, STOP.
 
@@ -153,7 +150,11 @@ Implementation:
 
 The implementation uses only Python standard-library modules. No dependency or workflow change is required.
 
-Provider access is intentionally constructed through GET requests only. No POST, PATCH, PUT, DELETE, Publish, deployment, versioning enablement or provider branch mutation path exists in A5 V1.
+Provider access is constructed through GET requests only. Endpoint paths must match one of the exact A5 read shapes; paths for drafts, compile, settings or mutation surfaces are rejected before any network call.
+
+No POST, PATCH, PUT, DELETE, Publish, deployment, versioning enablement or provider branch mutation path exists in A5 V1.
+
+Provider HTTP error bodies are never echoed into logs/output.
 
 Agent selection fails closed:
 
@@ -200,6 +201,7 @@ First Message              exact after line-ending normalization
 System Prompt              exact after line-ending normalization
 LLM                        exact
 resolved voice name        exact
+voice resource fingerprint exact when pinned; otherwise UNVERIFIABLE
 10 variable names          exact set
 Procedure set              exact by Procedure name
 Procedure type             exact
@@ -242,13 +244,15 @@ The harness intentionally does not emit raw:
 - API keys;
 - agent IDs;
 - Procedure IDs;
+- voice IDs;
 - prompt text;
 - First Message text;
 - Procedure content;
 - dynamic-variable values;
+- provider HTTP error bodies;
 - raw provider responses.
 
-Textual provider content is represented in the report by SHA-256 fingerprint plus length where required for reproducible comparison.
+Textual provider content and resource identities needed for reproducible comparison are represented by SHA-256 fingerprints, plus lengths where useful.
 
 The report may contain non-secret semantic metadata such as agent name, language, LLM, resolved voice display name, dynamic-variable names, Procedure names/types and Boolean draft/version-presence indicators.
 
@@ -284,20 +288,20 @@ Repository tests:
 python -m unittest discover -s tests -v
 ```
 
-Current deterministic test coverage checks:
+Current deterministic coverage verifies:
 
-- exact expected fixture → `NO_DRIFT`;
+- fully pinned exact fixture → `NO_DRIFT`;
+- unpinned exact voice identity → `UNVERIFIABLE` rather than false `NO_DRIFT`;
 - material model/Procedure-type difference → `DRIFT`;
 - missing Procedure branch metadata → `UNVERIFIABLE`;
-- sanitized snapshot excludes raw prompt/First Message and provider IDs.
+- sanitized snapshot excludes raw prompt/First Message and provider resource IDs;
+- endpoint allowlist accepts only the five required A5 GET endpoint shapes and rejects adjacent draft/compile/settings paths.
 
 No live ElevenLabs call is represented by those unit tests.
 
 ## 13. Current official-risk finding: Structured Procedure + Qwen
 
-The current official Structured Procedures documentation states that Structured Procedures run ordered typed steps and currently describes the feature as Alpha.
-
-It also states that forced internal tool choice is supported by major OpenAI, Anthropic, Gemini and Grok model families, while other models/custom providers may not guarantee the transitions used for procedure entry/completion.
+Current official ElevenLabs documentation defines Structured Procedures as ordered typed steps. It also states that forced internal tool choice used for procedure transitions/completion is supported by major OpenAI, Anthropic, Gemini and Grok model families, while other models/custom providers may not guarantee those transitions.
 
 A5 preserves Qwen because Albert explicitly authorized that preservation.
 
