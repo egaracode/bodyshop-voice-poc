@@ -1,36 +1,24 @@
 #!/usr/bin/env python3
 """A5 ElevenLabs provider-control reader/diff.
 
-Read-only by construction: every provider request is GET and every path must match
-one of the explicitly supported read endpoints. Secrets, raw provider payloads,
-resource IDs, dynamic-variable values, prompt text and Procedure bodies are never
-written to the sanitized report.
+Read-only by construction. The only network operations are GET requests to the
+five documented endpoint shapes required by A5. Output is sanitized.
 """
-
 from __future__ import annotations
-
-import argparse
-import hashlib
-import json
-import os
-import sys
-import urllib.error
-import urllib.parse
-import urllib.request
+import argparse, hashlib, json, os, re, sys
+import urllib.error, urllib.parse, urllib.request
 from dataclasses import dataclass
 from typing import Any
 
 API_BASE = "https://api.elevenlabs.io"
 API_KEY_ENV = "ELEVENLABS_API_KEY"
-
+SAFE_ID = re.compile(r"^[A-Za-z0-9_-]+$")
 
 class HarnessError(RuntimeError):
     pass
 
-
 def sha256_text(value: str) -> str:
     return hashlib.sha256(value.encode("utf-8")).hexdigest()
-
 
 def normalize_text(value: Any) -> str | None:
     if value is None:
@@ -39,64 +27,40 @@ def normalize_text(value: Any) -> str | None:
         raise HarnessError(f"Expected text, got {type(value).__name__}")
     return value.replace("\r\n", "\n").replace("\r", "\n").strip()
 
-
 def canonical_structured_content(value: Any) -> str:
     if isinstance(value, str):
         try:
             value = json.loads(value)
         except json.JSONDecodeError as exc:
             raise HarnessError("Structured Procedure content is not valid JSON") from exc
+    if not isinstance(value, dict) or not isinstance(value.get("steps"), list):
+        raise HarnessError("Structured Procedure content must be a JSON object with steps")
     return json.dumps(value, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
 
-
-def path_is_allowlisted(path: str) -> bool:
-    """Accept only the exact read endpoint shapes required by A5."""
-    parts = path.strip("/").split("/")
-    if parts == ["v1", "convai", "agents"]:
-        return True
-    if len(parts) == 4 and parts[:3] == ["v1", "convai", "agents"] and parts[3]:
-        return True
-    if (
-        len(parts) in (7, 8)
-        and parts[:3] == ["v1", "convai", "agents"]
-        and parts[3]
-        and parts[4] == "branches"
-        and parts[5]
-        and parts[6] == "procedures"
-        and (len(parts) == 7 or (bool(parts[7]) and parts[7] != "compile"))
-    ):
-        return True
-    if len(parts) == 3 and parts[:2] == ["v1", "voices"] and parts[2]:
-        return True
-    return False
-
+def safe_identifier(value: Any, label: str, reserved: set[str] | None = None) -> str:
+    if not isinstance(value, str) or not value or not SAFE_ID.fullmatch(value):
+        raise HarnessError(f"Invalid {label}")
+    if reserved and value in reserved:
+        raise HarnessError(f"Reserved token cannot be used as {label}")
+    return urllib.parse.quote(value, safe="")
 
 @dataclass
 class ApiClient:
     api_key: str
     base_url: str = API_BASE
 
-    def get(self, path: str, query: dict[str, str] | None = None) -> dict[str, Any]:
-        if not path_is_allowlisted(path):
-            raise HarnessError(f"Endpoint is not allowlisted for A5 read-only access: {path}")
-        query_string = urllib.parse.urlencode(query or {})
-        url = f"{self.base_url}{path}"
-        if query_string:
-            url = f"{url}?{query_string}"
+    def _get(self, path: str, query: dict[str, str] | None = None) -> dict[str, Any]:
+        q = urllib.parse.urlencode(query or {})
+        url = f"{self.base_url}{path}" + (f"?{q}" if q else "")
         request = urllib.request.Request(
-            url,
-            method="GET",
-            headers={
-                "accept": "application/json",
-                "xi-api-key": self.api_key,
-                "user-agent": "bodyshop-voice-poc-a5-read-only/1",
-            },
+            url, method="GET",
+            headers={"accept":"application/json","xi-api-key":self.api_key,
+                     "user-agent":"bodyshop-voice-poc-a5-read-only/1"},
         )
         try:
             with urllib.request.urlopen(request, timeout=30) as response:
                 payload = response.read().decode("utf-8")
         except urllib.error.HTTPError as exc:
-            # Never echo provider error bodies: they can contain unexpected data.
             raise HarnessError(f"ElevenLabs GET failed: HTTP {exc.code}") from exc
         except urllib.error.URLError as exc:
             raise HarnessError("ElevenLabs GET failed due to a network error") from exc
@@ -108,441 +72,218 @@ class ApiClient:
             raise HarnessError("ElevenLabs returned an unexpected non-object response")
         return parsed
 
+    def list_agents(self, name: str, cursor: str | None = None) -> dict[str, Any]:
+        query={"page_size":"100","search":name,"archived":"false"}
+        if cursor: query["cursor"]=cursor
+        return self._get("/v1/convai/agents", query)
 
-def find_exact_agent(client: ApiClient, name: str) -> dict[str, Any]:
-    cursor: str | None = None
-    matches: list[dict[str, Any]] = []
-    while True:
-        query = {"page_size": "100", "search": name, "archived": "false"}
-        if cursor:
-            query["cursor"] = cursor
-        page = client.get("/v1/convai/agents", query)
-        for item in page.get("agents", []):
-            if isinstance(item, dict) and item.get("name") == name and not item.get("archived", False):
-                matches.append(item)
-        if not page.get("has_more"):
-            break
-        cursor = page.get("next_cursor")
-        if not isinstance(cursor, str) or not cursor:
-            raise HarnessError("Agent pagination advertised has_more without next_cursor")
-    if len(matches) != 1:
-        raise HarnessError(
-            f"Expected exactly one non-archived agent named {name!r}; found {len(matches)}"
-        )
-    return matches[0]
+    def get_agent(self, agent_id: str) -> dict[str, Any]:
+        aid=safe_identifier(agent_id,"agent_id")
+        return self._get(f"/v1/convai/agents/{aid}")
 
+    def list_procedures(self, agent_id: str, branch_id: str, agent_version_id: str | None) -> dict[str, Any]:
+        aid=safe_identifier(agent_id,"agent_id")
+        bid=safe_identifier(branch_id,"branch_id")
+        query={"agent_version_id":agent_version_id} if agent_version_id else None
+        return self._get(f"/v1/convai/agents/{aid}/branches/{bid}/procedures",query)
+
+    def get_procedure(self, agent_id: str, branch_id: str, procedure_id: str, agent_version_id: str | None) -> dict[str, Any]:
+        aid=safe_identifier(agent_id,"agent_id")
+        bid=safe_identifier(branch_id,"branch_id")
+        pid=safe_identifier(procedure_id,"procedure_id",{"compile","draft"})
+        query={"agent_version_id":agent_version_id} if agent_version_id else None
+        return self._get(f"/v1/convai/agents/{aid}/branches/{bid}/procedures/{pid}",query)
+
+    def get_voice(self, voice_id: str) -> dict[str, Any]:
+        vid=safe_identifier(voice_id,"voice_id",{"settings"})
+        return self._get(f"/v1/voices/{vid}")
 
 def safe_id_fingerprint(value: Any) -> str | None:
-    if not isinstance(value, str) or not value:
-        return None
-    return sha256_text(value)
+    return sha256_text(value) if isinstance(value,str) and value else None
 
+def find_exact_agent(client: ApiClient, name: str) -> dict[str, Any]:
+    cursor=None; matches=[]
+    while True:
+        page=client.list_agents(name,cursor)
+        for item in page.get("agents",[]):
+            if isinstance(item,dict) and item.get("name")==name and not item.get("archived",False):
+                matches.append(item)
+        if not page.get("has_more"): break
+        cursor=page.get("next_cursor")
+        if not isinstance(cursor,str) or not cursor:
+            raise HarnessError("Agent pagination advertised has_more without next_cursor")
+    if len(matches)!=1:
+        raise HarnessError(f"Expected exactly one non-archived agent named {name!r}; found {len(matches)}")
+    return matches[0]
 
-def extract_dynamic_variable_names(agent: dict[str, Any]) -> list[str] | None:
-    node = (
-        agent.get("conversation_config", {})
-        .get("agent", {})
-        .get("dynamic_variables", {})
-        .get("dynamic_variable_placeholders")
-    )
-    if node is None:
-        return None
-    if not isinstance(node, dict):
-        raise HarnessError("dynamic_variable_placeholders is not an object")
-    return sorted(str(key) for key in node.keys())
+def dynamic_variable_names(agent: dict[str,Any]) -> list[str] | None:
+    node=agent.get("conversation_config",{}).get("agent",{}).get("dynamic_variables",{}).get("dynamic_variable_placeholders")
+    if node is None: return None
+    if not isinstance(node,dict): raise HarnessError("dynamic_variable_placeholders is not an object")
+    return sorted(str(k) for k in node)
 
+def collect_procedures(client: ApiClient, agent_id: str, branch_id: Any, version_id: Any):
+    if not isinstance(branch_id,str) or not branch_id:
+        return None,"Provider did not expose branch_id; Procedures API requires branch_id."
+    listing=client.list_procedures(agent_id,branch_id,version_id if isinstance(version_id,str) else None)
+    out=[]
+    for meta in listing.get("procedures",[]):
+        if not isinstance(meta,dict): continue
+        pid=meta.get("procedure_id")
+        if not isinstance(pid,str) or not pid: raise HarnessError("Procedure listing omitted procedure_id")
+        full=client.get_procedure(agent_id,branch_id,pid,version_id if isinstance(version_id,str) else None)
+        ptype=full.get("type",meta.get("type","free_form"))
+        raw=full.get("content","")
+        canonical=canonical_structured_content(raw) if ptype=="structured" else (normalize_text(raw) or "")
+        out.append({
+          "name":full.get("name",meta.get("name")),"type":ptype,
+          "trigger":normalize_text(full.get("trigger",meta.get("trigger",""))) or "",
+          "content_canonical":canonical,"content_sha256":sha256_text(canonical),
+          "has_draft":bool(meta.get("has_draft",False)),
+          "procedure_version_present":bool(full.get("version_id") or meta.get("version_id")),
+        })
+    out.sort(key=lambda x:str(x.get("name")))
+    return out,None
 
-def get_voice_identity(client: ApiClient, voice_id: Any) -> dict[str, Any]:
-    if not isinstance(voice_id, str) or not voice_id:
-        return {"name": None, "id_sha256": None}
-    voice = client.get(f"/v1/voices/{urllib.parse.quote(voice_id, safe='')}")
-    name = voice.get("name")
+def collect_provider_state(client: ApiClient, agent_name: str) -> dict[str,Any]:
+    listed=find_exact_agent(client,agent_name)
+    agent_id=listed.get("agent_id")
+    if not isinstance(agent_id,str) or not agent_id: raise HarnessError("Matched agent omitted agent_id")
+    agent=client.get_agent(agent_id)
+    cfg=agent.get("conversation_config",{})
+    acfg=cfg.get("agent",{})
+    pcfg=acfg.get("prompt",{})
+    tts=cfg.get("tts",{})
+    voice_id=tts.get("voice_id")
+    voice=client.get_voice(voice_id) if isinstance(voice_id,str) and voice_id else {}
+    branch_id=agent.get("branch_id"); version_id=agent.get("version_id")
+    procedures,gap=collect_procedures(client,agent_id,branch_id,version_id)
     return {
-        "name": name if isinstance(name, str) else None,
-        "id_sha256": safe_id_fingerprint(voice_id),
+      "agent":{
+        "name":agent.get("name"),"language":acfg.get("language"),
+        "first_message":normalize_text(acfg.get("first_message")),
+        "system_prompt":normalize_text(pcfg.get("prompt")),
+        "llm":{"id":pcfg.get("llm"),"temperature":pcfg.get("temperature"),"max_tokens":pcfg.get("max_tokens")},
+        "voice":{
+          "name":voice.get("name") if isinstance(voice.get("name"),str) else None,
+          "id_sha256":safe_id_fingerprint(voice_id),
+          "tts_model_id":tts.get("model_id"),"stability":tts.get("stability"),
+          "speed":tts.get("speed"),"similarity_boost":tts.get("similarity_boost"),
+        },
+        "dynamic_variable_names":dynamic_variable_names(agent),
+      },
+      "procedures":procedures,"procedures_gap":gap,
+      "provider_metadata":{
+        "version_present":isinstance(version_id,str) and bool(version_id),
+        "branch_present":isinstance(branch_id,str) and bool(branch_id),
+        "main_branch_present":isinstance(agent.get("main_branch_id"),str) and bool(agent.get("main_branch_id")),
+        "version_id_sha256":safe_id_fingerprint(version_id),
+        "branch_id_sha256":safe_id_fingerprint(branch_id),
+        "main_branch_id_sha256":safe_id_fingerprint(agent.get("main_branch_id")),
+      },
     }
 
-
-def collect_procedures(
-    client: ApiClient,
-    agent_id: str,
-    branch_id: Any,
-    agent_version_id: Any,
-) -> tuple[list[dict[str, Any]] | None, str | None]:
-    if not isinstance(branch_id, str) or not branch_id:
-        return None, "Provider did not expose branch_id; Procedures API requires branch_id."
-
-    base = (
-        f"/v1/convai/agents/{urllib.parse.quote(agent_id, safe='')}"
-        f"/branches/{urllib.parse.quote(branch_id, safe='')}/procedures"
-    )
-    query: dict[str, str] = {}
-    if isinstance(agent_version_id, str) and agent_version_id:
-        query["agent_version_id"] = agent_version_id
-
-    listing = client.get(base, query or None)
-    normalized: list[dict[str, Any]] = []
-    for meta in listing.get("procedures", []):
-        if not isinstance(meta, dict):
-            continue
-        procedure_id = meta.get("procedure_id")
-        if not isinstance(procedure_id, str) or not procedure_id:
-            raise HarnessError("Procedure listing omitted procedure_id")
-        full = client.get(
-            f"{base}/{urllib.parse.quote(procedure_id, safe='')}",
-            query or None,
-        )
-        p_type = full.get("type", meta.get("type", "free_form"))
-        raw_content = full.get("content", "")
-        if p_type == "structured":
-            canonical = canonical_structured_content(raw_content)
-        else:
-            canonical = normalize_text(raw_content) or ""
-        trigger = normalize_text(full.get("trigger", meta.get("trigger", ""))) or ""
-        normalized.append(
-            {
-                "name": full.get("name", meta.get("name")),
-                "type": p_type,
-                "trigger": trigger,
-                "content_canonical": canonical,
-                "content_sha256": sha256_text(canonical),
-                "has_draft": bool(meta.get("has_draft", False)),
-                "procedure_version_present": bool(
-                    full.get("version_id") or meta.get("version_id")
-                ),
-            }
-        )
-    normalized.sort(key=lambda item: str(item.get("name")))
-    return normalized, None
-
-
-def collect_provider_state(client: ApiClient, agent_name: str) -> dict[str, Any]:
-    listed = find_exact_agent(client, agent_name)
-    agent_id = listed.get("agent_id")
-    if not isinstance(agent_id, str) or not agent_id:
-        raise HarnessError("Matched agent omitted agent_id")
-
-    agent = client.get(f"/v1/convai/agents/{urllib.parse.quote(agent_id, safe='')}")
-    config = agent.get("conversation_config", {})
-    agent_cfg = config.get("agent", {})
-    prompt_cfg = agent_cfg.get("prompt", {})
-    tts_cfg = config.get("tts", {})
-    branch_id = agent.get("branch_id")
-    version_id = agent.get("version_id")
-
-    procedures, procedures_gap = collect_procedures(
-        client, agent_id, branch_id, version_id
-    )
-    return {
-        "agent": {
-            "name": agent.get("name"),
-            "language": agent_cfg.get("language"),
-            "first_message": normalize_text(agent_cfg.get("first_message")),
-            "system_prompt": normalize_text(prompt_cfg.get("prompt")),
-            "llm": prompt_cfg.get("llm"),
-            "voice": get_voice_identity(client, tts_cfg.get("voice_id")),
-            "dynamic_variable_names": extract_dynamic_variable_names(agent),
-        },
-        "procedures": procedures,
-        "procedures_gap": procedures_gap,
-        "provider_metadata": {
-            "version_present": isinstance(version_id, str) and bool(version_id),
-            "branch_present": isinstance(branch_id, str) and bool(branch_id),
-            "main_branch_present": isinstance(agent.get("main_branch_id"), str)
-            and bool(agent.get("main_branch_id")),
-            "version_id_sha256": safe_id_fingerprint(version_id),
-            "branch_id_sha256": safe_id_fingerprint(branch_id),
-            "main_branch_id_sha256": safe_id_fingerprint(agent.get("main_branch_id")),
-        },
-    }
-
-
-def result(
-    field: str,
-    status: str,
-    expected: Any = None,
-    actual: Any = None,
-    note: str | None = None,
-) -> dict[str, Any]:
-    item: dict[str, Any] = {"field": field, "status": status}
-    if expected is not None:
-        item["expected"] = expected
-    if actual is not None:
-        item["actual"] = actual
-    if note:
-        item["note"] = note
+def result(field:str,status:str,expected:Any=None,actual:Any=None,note:str|None=None):
+    item={"field":field,"status":status}
+    if expected is not None: item["expected"]=expected
+    if actual is not None: item["actual"]=actual
+    if note: item["note"]=note
     return item
 
-
-def compare_expected(expected: dict[str, Any], actual: dict[str, Any]) -> list[dict[str, Any]]:
-    results: list[dict[str, Any]] = []
-    exp_agent = expected["agent"]
-    act_agent = actual["agent"]
-
-    scalar_fields = {
-        "agent.name": (exp_agent.get("name"), act_agent.get("name")),
-        "agent.language": (exp_agent.get("language"), act_agent.get("language")),
-        "agent.llm": (exp_agent.get("llm"), act_agent.get("llm")),
-        "agent.voice.name": (
-            exp_agent.get("voice", {}).get("name"),
-            act_agent.get("voice", {}).get("name"),
-        ),
-    }
-    for field, (exp_value, act_value) in scalar_fields.items():
-        if act_value is None:
-            results.append(result(field, "UNVERIFIABLE", expected=exp_value))
-        else:
-            results.append(
-                result(
-                    field,
-                    "NO_DRIFT" if exp_value == act_value else "DRIFT",
-                    expected=exp_value,
-                    actual=act_value,
-                )
-            )
-
-    expected_voice_id_hash = exp_agent.get("voice", {}).get("id_sha256")
-    actual_voice_id_hash = act_agent.get("voice", {}).get("id_sha256")
-    if not expected_voice_id_hash:
-        results.append(
-            result(
-                "agent.voice.id_sha256",
-                "UNVERIFIABLE",
-                note="Exact expected voice resource fingerprint is not yet pinned in GitHub.",
-            )
-        )
-    elif not actual_voice_id_hash:
-        results.append(
-            result(
-                "agent.voice.id_sha256",
-                "UNVERIFIABLE",
-                expected=expected_voice_id_hash,
-                note="Provider voice resource identifier was not exposed.",
-            )
-        )
+def compare_scalar(results,field,expected,actual):
+    if expected is None:
+        results.append(result(field,"UNVERIFIABLE",actual=actual,note="Expected value is not pinned in GitHub."))
+    elif actual is None:
+        results.append(result(field,"UNVERIFIABLE",expected=expected,note="Provider did not expose the value."))
     else:
-        results.append(
-            result(
-                "agent.voice.id_sha256",
-                "NO_DRIFT" if expected_voice_id_hash == actual_voice_id_hash else "DRIFT",
-                expected=expected_voice_id_hash,
-                actual=actual_voice_id_hash,
-            )
-        )
+        results.append(result(field,"NO_DRIFT" if expected==actual else "DRIFT",expected,actual))
 
-    for field, key in (
-        ("agent.first_message", "first_message"),
-        ("agent.system_prompt", "system_prompt"),
-    ):
-        exp_text = normalize_text(exp_agent.get(key))
-        act_text = normalize_text(act_agent.get(key))
-        if act_text is None:
-            results.append(
-                {
-                    "field": field,
-                    "status": "UNVERIFIABLE",
-                    "expected_sha256": sha256_text(exp_text or ""),
-                    "expected_length": len(exp_text or ""),
-                }
-            )
-        else:
-            results.append(
-                {
-                    "field": field,
-                    "status": "NO_DRIFT" if exp_text == act_text else "DRIFT",
-                    "expected_sha256": sha256_text(exp_text or ""),
-                    "actual_sha256": sha256_text(act_text),
-                    "expected_length": len(exp_text or ""),
-                    "actual_length": len(act_text),
-                }
-            )
+def compare_text(results,field,expected,actual):
+    exp=normalize_text(expected); act=normalize_text(actual)
+    if exp is None:
+        item={"field":field,"status":"UNVERIFIABLE","note":"Expected text is not pinned in GitHub."}
+        if act is not None: item.update(actual_sha256=sha256_text(act),actual_length=len(act))
+        results.append(item); return
+    if act is None:
+        results.append({"field":field,"status":"UNVERIFIABLE","expected_sha256":sha256_text(exp),"expected_length":len(exp)})
+        return
+    results.append({"field":field,"status":"NO_DRIFT" if exp==act else "DRIFT",
+                    "expected_sha256":sha256_text(exp),"actual_sha256":sha256_text(act),
+                    "expected_length":len(exp),"actual_length":len(act)})
 
-    exp_vars = sorted(exp_agent.get("dynamic_variable_names", []))
-    act_vars = act_agent.get("dynamic_variable_names")
-    if act_vars is None:
-        results.append(
-            result("agent.dynamic_variable_names", "UNVERIFIABLE", expected=exp_vars)
-        )
+def compare_expected(expected: dict[str,Any], actual: dict[str,Any]) -> list[dict[str,Any]]:
+    r=[]; e=expected["agent"]; a=actual["agent"]
+    compare_scalar(r,"agent.name",e.get("name"),a.get("name"))
+    compare_scalar(r,"agent.language",e.get("language"),a.get("language"))
+    compare_text(r,"agent.first_message",e.get("first_message"),a.get("first_message"))
+    compare_text(r,"agent.system_prompt",e.get("system_prompt"),a.get("system_prompt"))
+    for key in ("id","temperature","max_tokens"):
+        compare_scalar(r,f"agent.llm.{key}",e.get("llm",{}).get(key),a.get("llm",{}).get(key))
+    for key in ("name","id_sha256","tts_model_id","stability","speed","similarity_boost"):
+        compare_scalar(r,f"agent.voice.{key}",e.get("voice",{}).get(key),a.get("voice",{}).get(key))
+    ev=sorted(e.get("dynamic_variable_names",[])); av=a.get("dynamic_variable_names")
+    if av is None: r.append(result("agent.dynamic_variable_names","UNVERIFIABLE",expected=ev))
+    else: r.append(result("agent.dynamic_variable_names","NO_DRIFT" if ev==sorted(av) else "DRIFT",ev,sorted(av)))
+
+    ep={p["name"]:p for p in expected.get("procedures",[])}
+    raw=actual.get("procedures")
+    if raw is None:
+        note=actual.get("procedures_gap") or "Procedures unavailable"
+        for name in sorted(ep): r.append(result(f"procedures.{name}","UNVERIFIABLE",note=note))
+        return r
+    ap={p.get("name"):p for p in raw if p.get("name")}
+    for name in sorted(set(ep)|set(ap)):
+        ex=ep.get(name); ac=ap.get(name)
+        if ex is None: r.append(result(f"procedures.{name}","DRIFT",note="Unexpected provider Procedure")); continue
+        if ac is None: r.append(result(f"procedures.{name}","DRIFT",note="Expected Procedure missing")); continue
+        compare_scalar(r,f"procedures.{name}.type",ex.get("type"),ac.get("type"))
+        compare_text(r,f"procedures.{name}.trigger",ex.get("trigger"),ac.get("trigger"))
+        expc=canonical_structured_content(ex.get("content")) if ex.get("type")=="structured" else (normalize_text(ex.get("content")) or "")
+        actc=ac.get("content_canonical")
+        compare_text(r,f"procedures.{name}.content",expc,actc)
+        if ac.get("has_draft"):
+            r.append(result(f"procedures.{name}.has_draft","DRIFT",actual=True,note="Provider reports unpublished draft changes."))
+    return r
+
+def overall_status(results):
+    statuses={x["status"] for x in results}
+    return "DRIFT" if "DRIFT" in statuses else ("UNVERIFIABLE" if "UNVERIFIABLE" in statuses else "NO_DRIFT")
+
+def sanitized_snapshot(actual):
+    a=actual["agent"]
+    safe={"agent":{
+      "name":a.get("name"),"language":a.get("language"),"llm":a.get("llm"),"voice":a.get("voice"),
+      "dynamic_variable_names":a.get("dynamic_variable_names"),
+    },"provider_metadata":actual.get("provider_metadata"),"procedures_gap":actual.get("procedures_gap")}
+    for key in ("first_message","system_prompt"):
+        text=a.get(key)
+        safe["agent"][f"{key}_sha256"]=sha256_text(text) if isinstance(text,str) else None
+        safe["agent"][f"{key}_length"]=len(text) if isinstance(text,str) else None
+    if actual.get("procedures") is None:
+        safe["procedures"]=None
     else:
-        results.append(
-            result(
-                "agent.dynamic_variable_names",
-                "NO_DRIFT" if exp_vars == sorted(act_vars) else "DRIFT",
-                expected=exp_vars,
-                actual=sorted(act_vars),
-            )
-        )
-
-    exp_procs = {p["name"]: p for p in expected.get("procedures", [])}
-    act_procs_raw = actual.get("procedures")
-    if act_procs_raw is None:
-        note = actual.get("procedures_gap") or "Procedures unavailable"
-        for name in sorted(exp_procs):
-            results.append(result(f"procedures.{name}", "UNVERIFIABLE", note=note))
-        return results
-
-    act_procs = {p.get("name"): p for p in act_procs_raw if p.get("name")}
-    for name in sorted(set(exp_procs) | set(act_procs)):
-        exp = exp_procs.get(name)
-        act = act_procs.get(name)
-        if exp is None:
-            results.append(
-                result(f"procedures.{name}", "DRIFT", note="Unexpected provider Procedure")
-            )
-            continue
-        if act is None:
-            results.append(
-                result(f"procedures.{name}", "DRIFT", note="Expected Procedure missing")
-            )
-            continue
-
-        results.append(
-            result(
-                f"procedures.{name}.type",
-                "NO_DRIFT" if exp.get("type") == act.get("type") else "DRIFT",
-                expected=exp.get("type"),
-                actual=act.get("type"),
-            )
-        )
-
-        exp_trigger = normalize_text(exp.get("trigger")) or ""
-        act_trigger = normalize_text(act.get("trigger")) or ""
-        results.append(
-            {
-                "field": f"procedures.{name}.trigger",
-                "status": "NO_DRIFT" if exp_trigger == act_trigger else "DRIFT",
-                "expected_sha256": sha256_text(exp_trigger),
-                "actual_sha256": sha256_text(act_trigger),
-            }
-        )
-
-        if exp.get("type") == "structured":
-            exp_content = canonical_structured_content(exp.get("content"))
-        else:
-            exp_content = normalize_text(exp.get("content")) or ""
-        act_content = act.get("content_canonical")
-        if not isinstance(act_content, str):
-            results.append(result(f"procedures.{name}.content", "UNVERIFIABLE"))
-        else:
-            results.append(
-                {
-                    "field": f"procedures.{name}.content",
-                    "status": "NO_DRIFT" if exp_content == act_content else "DRIFT",
-                    "expected_sha256": sha256_text(exp_content),
-                    "actual_sha256": sha256_text(act_content),
-                    "expected_length": len(exp_content),
-                    "actual_length": len(act_content),
-                }
-            )
-
-        if act.get("has_draft"):
-            results.append(
-                result(
-                    f"procedures.{name}.has_draft",
-                    "DRIFT",
-                    actual=True,
-                    note="Provider reports unpublished draft changes for this Procedure.",
-                )
-            )
-    return results
-
-
-def sanitized_snapshot(actual: dict[str, Any]) -> dict[str, Any]:
-    agent = actual["agent"]
-    safe: dict[str, Any] = {
-        "agent": {
-            "name": agent.get("name"),
-            "language": agent.get("language"),
-            "llm": agent.get("llm"),
-            "voice": agent.get("voice"),
-            "dynamic_variable_names": agent.get("dynamic_variable_names"),
-            "first_message_sha256": sha256_text(agent["first_message"])
-            if isinstance(agent.get("first_message"), str)
-            else None,
-            "first_message_length": len(agent["first_message"])
-            if isinstance(agent.get("first_message"), str)
-            else None,
-            "system_prompt_sha256": sha256_text(agent["system_prompt"])
-            if isinstance(agent.get("system_prompt"), str)
-            else None,
-            "system_prompt_length": len(agent["system_prompt"])
-            if isinstance(agent.get("system_prompt"), str)
-            else None,
-        },
-        "provider_metadata": actual["provider_metadata"],
-        "procedures_gap": actual.get("procedures_gap"),
-        "procedures": [],
-    }
-    if actual.get("procedures") is not None:
-        for proc in actual["procedures"]:
-            safe["procedures"].append(
-                {
-                    "name": proc.get("name"),
-                    "type": proc.get("type"),
-                    "trigger_sha256": sha256_text(proc.get("trigger", "")),
-                    "content_sha256": proc.get("content_sha256"),
-                    "content_length": len(proc.get("content_canonical", "")),
-                    "has_draft": proc.get("has_draft"),
-                    "procedure_version_present": proc.get("procedure_version_present"),
-                }
-            )
+        safe["procedures"]=[{k:p.get(k) for k in ("name","type","content_sha256","has_draft","procedure_version_present")} |
+                            {"trigger_sha256":sha256_text(p.get("trigger","")),"content_length":len(p.get("content_canonical",""))}
+                            for p in actual["procedures"]]
     return safe
 
-
-def overall_status(results: list[dict[str, Any]]) -> str:
-    statuses = {item["status"] for item in results}
-    if "DRIFT" in statuses:
-        return "DRIFT"
-    if "UNVERIFIABLE" in statuses:
-        return "UNVERIFIABLE"
-    return "NO_DRIFT"
-
-
-def main(argv: list[str] | None = None) -> int:
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--expected", required=True, help="Path to A5 expected configuration JSON")
-    parser.add_argument("--agent-name", default="AI Control")
-    parser.add_argument("--output", help="Optional sanitized JSON output path")
-    args = parser.parse_args(argv)
-
-    api_key = os.environ.get(API_KEY_ENV)
-    if not api_key:
-        print(
-            f"ERROR: {API_KEY_ENV} is not set. Do not paste the secret into chat or commit it.",
-            file=sys.stderr,
-        )
-        return 2
-
-    with open(args.expected, "r", encoding="utf-8") as handle:
-        expected = json.load(handle)
-
+def main(argv=None):
+    p=argparse.ArgumentParser()
+    p.add_argument("--expected",required=True); p.add_argument("--output",required=True)
+    p.add_argument("--agent-name",default="AI Control")
+    args=p.parse_args(argv)
+    key=os.getenv(API_KEY_ENV)
+    if not key:
+        print(f"ERROR: {API_KEY_ENV} is not set",file=sys.stderr); return 2
     try:
-        actual = collect_provider_state(ApiClient(api_key), args.agent_name)
-        results = compare_expected(expected, actual)
-    except HarnessError as exc:
-        print(f"ERROR: {exc}", file=sys.stderr)
-        return 2
+        with open(args.expected,encoding="utf-8") as f: expected=json.load(f)
+        actual=collect_provider_state(ApiClient(key),args.agent_name)
+        results=compare_expected(expected,actual)
+        report={"schema_version":1,"overall":overall_status(results),"results":results,"snapshot":sanitized_snapshot(actual)}
+        with open(args.output,"w",encoding="utf-8") as f: json.dump(report,f,ensure_ascii=False,indent=2); f.write("\n")
+    except (HarnessError,OSError,ValueError,KeyError) as exc:
+        print(f"ERROR: {exc}",file=sys.stderr); return 2
+    return 0 if report["overall"]=="NO_DRIFT" else 1
 
-    report = {
-        "schema_version": 1,
-        "authority": expected.get("authority", {}).get("name"),
-        "overall": overall_status(results),
-        "snapshot": sanitized_snapshot(actual),
-        "results": results,
-        "read_only_invariant": {
-            "http_methods": ["GET"],
-            "provider_write_performed": False,
-            "publish_performed": False,
-            "versioning_mutation_performed": False,
-        },
-    }
-    rendered = json.dumps(report, ensure_ascii=False, indent=2, sort_keys=True)
-    if args.output:
-        with open(args.output, "w", encoding="utf-8", newline="\n") as handle:
-            handle.write(rendered + "\n")
-    print(rendered)
-    return 0 if report["overall"] == "NO_DRIFT" else 1
-
-
-if __name__ == "__main__":
+if __name__=="__main__":
     raise SystemExit(main())
