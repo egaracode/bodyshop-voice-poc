@@ -19,7 +19,8 @@
     "llm": "Qwen3.5-397B-A17B",
     "voice": {
       "name": "Eric",
-      "comparison": "resolved_voice_name"
+      "id_sha256": null,
+      "comparison": "resolved_name_plus_optional_id_sha256"
     },
     "dynamic_variable_names": [
       "activation_verified",
@@ -41,14 +42,57 @@
       "trigger": "When the caller is an operator in an active AI Control session reporting or preparing to report a breakdown.",
       "content": {
         "steps": [
-          {"type":"ask","instruction":"Ask for the operator's full identity: name and at least one surname. Do not advance until it is clear enough to rely on."},
-          {"type":"ask","instruction":"Ask exactly: ¿De qué modelo llamas? Retain a clear model already provided and do not ask it again."},
-          {"type":"ask","instruction":"Ask exactly: ¿Qué instalación? Installation means the local production installation, area or equipment grouping; do not silently treat an operation or problem narrative as the installation."},
-          {"type":"ask","instruction":"Ask exactly: ¿Qué operación tiene la avería? Require the operation/station/process reference; do not silently treat machine activity or the problem description as the operation."},
-          {"type":"ask","instruction":"Ask exactly: ¿Qué elemento o dispositivo tiene la avería? Identify the affected physical element or device."},
-          {"type":"branch","branches":[{"condition":{"type":"llm","condition":"The affected element or device has an applicable individual reference and that exact reference is not yet clear."},"steps":[{"type":"ask","instruction":"Ask only for the exact individual reference of the affected element. Do not invent or require a reference when that element has no applicable individual identifier."}]}],"fallback":[{"type":"tell","instruction":"Continue without inventing or requiring an individual element reference when no such reference is applicable."}]},
-          {"type":"ask","instruction":"Ask exactly: ¿Qué problema o avería tiene? An observable symptom is sufficient; do not require a root-cause diagnosis."},
-          {"type":"tell","instruction":"Give a short sandbox-only summary of the collected breakdown information and state that no real breakdown was registered and no operational system was notified."}
+          {
+            "type": "ask",
+            "instruction": "Ask for the operator's full identity: name and at least one surname. Do not advance until it is clear enough to rely on."
+          },
+          {
+            "type": "ask",
+            "instruction": "Ask exactly: ¿De qué modelo llamas? Retain a clear model already provided and do not ask it again."
+          },
+          {
+            "type": "ask",
+            "instruction": "Ask exactly: ¿Qué instalación? Installation means the local production installation, area or equipment grouping; do not silently treat an operation or problem narrative as the installation."
+          },
+          {
+            "type": "ask",
+            "instruction": "Ask exactly: ¿Qué operación tiene la avería? Require the operation/station/process reference; do not silently treat machine activity or the problem description as the operation."
+          },
+          {
+            "type": "ask",
+            "instruction": "Ask exactly: ¿Qué elemento o dispositivo tiene la avería? Identify the affected physical element or device."
+          },
+          {
+            "type": "branch",
+            "branches": [
+              {
+                "condition": {
+                  "type": "llm",
+                  "condition": "The affected element or device has an applicable individual reference and that exact reference is not yet clear."
+                },
+                "steps": [
+                  {
+                    "type": "ask",
+                    "instruction": "Ask only for the exact individual reference of the affected element. Do not invent or require a reference when that element has no applicable individual identifier."
+                  }
+                ]
+              }
+            ],
+            "fallback": [
+              {
+                "type": "tell",
+                "instruction": "Continue without inventing or requiring an individual element reference when no such reference is applicable."
+              }
+            ]
+          },
+          {
+            "type": "ask",
+            "instruction": "Ask exactly: ¿Qué problema o avería tiene? An observable symptom is sufficient; do not require a root-cause diagnosis."
+          },
+          {
+            "type": "tell",
+            "instruction": "Give a short sandbox-only summary of the collected breakdown information and state that no real breakdown was registered and no operational system was notified."
+          }
         ]
       }
     },
