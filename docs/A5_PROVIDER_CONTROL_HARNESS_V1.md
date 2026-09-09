@@ -8,20 +8,19 @@ PHASE: 1 READ_ONLY
 PROVIDER_WRITES: FORBIDDEN
 PUBLISH: FORBIDDEN
 VERSIONING_MUTATION: FORBIDDEN
+PR: #15 DRAFT
 ```
 
-This document defines the A5 read-only control path for the isolated ElevenLabs `AI Control` sandbox.
+A5 establishes a reproducible read-only inspection path for the isolated ElevenLabs `AI Control` sandbox.
 
 ## 2. Authority
-
-A5 resolves the A4 reproducibility problem by separating semantic authority, expected provider configuration and historical evidence:
 
 ```text
 A2 + A3
 → semantic authority
 
 A5_EXPECTED_PROVIDER_CONFIGURATION_V1
-→ provider configuration authority
+→ provider-configuration authority
 
 PR #13 / head 1de7cf9cda806af7b355e3228585cb115347c049
 → historical evidence only
@@ -33,9 +32,9 @@ Machine-readable expected state:
 
 `elevenlabs/A5_EXPECTED_PROVIDER_CONFIGURATION_V1.json`
 
-## 3. Expected A5 operator architecture
+## 3. Expected operator architecture
 
-The operator path is expected to use one ElevenLabs Structured Procedure with ordered collection:
+One Structured Procedure owns the operator collection sequence:
 
 ```text
 identity
@@ -48,27 +47,41 @@ identity
 → sandbox-only summary
 ```
 
-The conditional element-reference rule is preserved:
+The conditional reference rule is mandatory: do not fabricate or universally require an individual element reference. Unknown applicability fails safe.
 
-- require the exact individual reference only when that physical element has an applicable individual identifier;
-- do not fabricate or universally require a reference;
-- unknown applicability fails safe rather than inventing workshop relationships.
+The former A4 Free-form operator Procedure and element sub-procedure are not A5 authority. If present as additional provider Procedures, they are `DRIFT`.
 
-The previous A4 Free-form operator Procedure and element sub-procedure are not A5 authority. If they remain present in the provider as additional Procedures, the harness classifies them as `DRIFT`.
+Technician `cerrar` or equivalent remains `REQUEST_PRE_CLOSE` in the correct technician/exact-breakdown context, never final technical closure by AI Control.
 
-The technician pre-close semantics remain derived from A2/A3: technician `cerrar` or equivalent maps to `REQUEST_PRE_CLOSE` in the correct exact-breakdown context, never final technical closure by AI Control.
+## 4. Initially preserved choices
 
-## 4. Initially preserved provider choices
-
-A5 initially preserves the non-conflicting A4 evidence explicitly accepted by Albert:
+Albert authorized A5 to preserve initially:
 
 ```text
-LLM: Qwen3.5-397B-A17B
-VOICE DISPLAY NAME: Eric
-DYNAMIC VARIABLES: exactly 10
+LLM family/model: Qwen3.5-397B-A17B
+voice display name: Eric
+dynamic-variable names: exactly 10
 ```
 
-Expected variable names:
+The exact First Message was not specified by A2/A3 or the A5 authority decision. Therefore V1 deliberately leaves it unpinned and reports it `UNVERIFIABLE` while still reading and fingerprinting the provider value.
+
+Likewise, provider settings that are officially exposed but were not explicitly pinned are read and normalized without being silently invented:
+
+```text
+LLM temperature
+LLM max_tokens
+voice_id fingerprint
+TTS model_id
+TTS stability
+TTS speed
+TTS similarity_boost
+```
+
+A null expected value means `UNVERIFIABLE`, not `NO_DRIFT`.
+
+## 5. Dynamic variables
+
+Expected names:
 
 ```text
 channel_mode
@@ -83,13 +96,11 @@ breakdown_ref
 flow_stage
 ```
 
-Variable values/defaults are deliberately not persisted by the harness because they may contain runtime or operational data. A5 V1 compares the variable-name set.
+The harness compares the exact name set. Runtime/default values are not emitted because this public laboratory must not leak operational or personal data.
 
-The expected JSON reserves `voice.id_sha256` but leaves it `null` initially because no exact provider voice resource identifier is authoritative in GitHub. The harness compares the resolved display name (`Eric`) but reports `agent.voice.id_sha256 = UNVERIFIABLE` until a sanitized exact fingerprint is deliberately pinned. Therefore a full `NO_DRIFT` result cannot be claimed solely from a matching display name.
+## 6. Official read interfaces revalidated 2026-09-09
 
-## 5. Official provider interfaces revalidated 2026-09-09
-
-A5 uses only documented GET interfaces:
+A5 uses only documented GET operations:
 
 ```text
 GET /v1/convai/agents
@@ -99,15 +110,15 @@ GET /v1/convai/agents/{agent_id}/branches/{branch_id}/procedures/{procedure_id}
 GET /v1/voices/{voice_id}
 ```
 
-Official documentation establishes that:
+Current official documentation confirms:
 
-- List Agents can search/list agent metadata;
-- Get Agent exposes effective conversation configuration and version/branch identifiers where available;
-- List Procedures exposes Procedure ID, version, name, type, trigger and draft status;
-- Get Procedure exposes Procedure name, type, trigger and full content;
-- Structured Procedure content is a JSON-encoded ordered `steps` document;
-- Structured Procedure `Ask` waits for an appropriate user response and `branch` represents If/else branching;
-- versioning is opt-in and, once enabled, cannot be disabled.
+- Get Agent exposes conversation configuration including First Message, language, prompt/model parameters, dynamic-variable placeholders, TTS configuration and branch/version metadata where available.
+- List Procedures exposes procedure metadata and draft state.
+- Get Procedure exposes name, type, trigger and content.
+- Structured Procedure content is JSON-encoded with a `steps` array.
+- `ask`, `tell`, `say` and `branch` are current documented step types; `branch` uses ordered condition arms plus optional fallback.
+- Structured Procedures rely on forced internal tool choice for transitions/completion; major OpenAI, Anthropic, Gemini and Grok families are explicitly supported, while other models may need runtime verification.
+- Versioning is opt-in; A5 must not enable it.
 
 Official references:
 
@@ -116,68 +127,55 @@ Official references:
 - https://elevenlabs.io/docs/api-reference/agents/get
 - https://elevenlabs.io/docs/api-reference/agents/procedures/list
 - https://elevenlabs.io/docs/api-reference/agents/procedures/get
-- https://elevenlabs.io/docs/eleven-agents/customization/procedures
 - https://elevenlabs.io/docs/eleven-agents/customization/procedures/structured-procedures
 - https://elevenlabs.io/docs/eleven-agents/operate/versioning
 - https://elevenlabs.io/docs/api-reference/voices/get
 
-## 6. Authentication boundary
+The legacy `voices/get-all` documentation is not used by A5.
 
-ElevenLabs authenticates API requests using an API key in the `xi-api-key` header.
+## 7. Authentication boundary
 
-A5 rules:
+The harness reads the API key only from:
+
+`ELEVENLABS_API_KEY`
+
+Rules:
 
 ```text
-API KEY
-→ local environment only
-→ never command-line argument
-→ never repository
-→ never chat
-→ never output report
+local environment only
+never CLI argument
+never repository
+never chat
+never output report
 ```
 
-Use a dedicated restricted key where the ElevenLabs account UI permits the minimum required scope. ElevenLabs documents scope restrictions, quota restrictions and optional IP allowlisting for API keys.
+Use a dedicated restricted ElevenLabs key where account controls allow the minimum required scope.
 
-The harness reads only `ELEVENLABS_API_KEY` from the local process environment.
+STOP if secure authentication is not available.
 
-If secure authentication cannot be provided without exposing the key, STOP.
-
-## 7. Read-only implementation
+## 8. Read-only implementation
 
 Implementation:
 
 `tools/a5_provider_control.py`
 
-The implementation uses only Python standard-library modules. No dependency or workflow change is required.
+Properties:
 
-Provider access is constructed through GET requests only. Endpoint paths must match one of the exact A5 read shapes; paths for drafts, compile, settings or mutation surfaces are rejected before any network call.
+- Python standard library only;
+- only GET network operations;
+- endpoint construction is isolated in five explicit client methods;
+- provider IDs are validated before path construction;
+- adjacent mutation/draft tokens are rejected where relevant;
+- no POST/PATCH/PUT/DELETE;
+- no Publish;
+- no provider versioning or branch mutation;
+- HTTP error bodies are never echoed.
 
-No POST, PATCH, PUT, DELETE, Publish, deployment, versioning enablement or provider branch mutation path exists in A5 V1.
+Agent selection fails closed unless there is exactly one non-archived agent named `AI Control`.
 
-Provider HTTP error bodies are never echoed into logs/output.
+## 9. Procedure/versioning boundary
 
-Agent selection fails closed:
-
-```text
-exact non-archived name == "AI Control"
-
-0 matches
-→ ERROR
-
->1 exact matches
-→ ERROR
-
-exactly 1
-→ continue read-only
-```
-
-Provider resource IDs are used only in memory to address subsequent GET endpoints and are not written raw to the sanitized report.
-
-## 8. Procedure/versioning boundary
-
-The official Procedures endpoints require `branch_id` in their path.
-
-A5 must never enable versioning merely to obtain it.
+Procedures require a provider `branch_id`.
 
 ```text
 branch_id available
@@ -185,32 +183,40 @@ branch_id available
 
 branch_id unavailable
 → Procedures = UNVERIFIABLE
-→ do not mutate provider
+→ no provider mutation
 ```
 
-The same rule applies to version metadata: missing provider metadata is reported rather than invented.
+A5 never enables versioning merely to obtain branch metadata.
 
-## 9. Normalization and comparison
+## 10. Normalization and verdicts
 
-Expected vs actual comparison uses:
+Comparison covers:
 
 ```text
-agent name                 exact
-language                   exact
-First Message              exact after line-ending normalization
-System Prompt              exact after line-ending normalization
-LLM                        exact
-resolved voice name        exact
-voice resource fingerprint exact when pinned; otherwise UNVERIFIABLE
-10 variable names          exact set
-Procedure set              exact by Procedure name
-Procedure type             exact
-Procedure trigger          exact after line-ending normalization
-Free-form content          exact after line-ending normalization
-Structured content         canonical JSON
+agent name
+language
+First Message
+System Prompt
+LLM id
+LLM temperature
+LLM max_tokens
+voice display name
+voice resource fingerprint
+TTS model_id
+TTS stability
+TTS speed
+TTS similarity_boost
+10 dynamic-variable names
+Procedure set
+Procedure type
+Procedure trigger
+Procedure content
+Procedure draft state
 ```
 
-Every field produces one of:
+Text uses normalized line endings. Structured content uses canonical JSON.
+
+Field verdicts:
 
 ```text
 NO_DRIFT
@@ -218,49 +224,36 @@ DRIFT
 UNVERIFIABLE
 ```
 
-Unexpected provider Procedures are `DRIFT`.
-
-An expected Procedure missing from provider is `DRIFT`.
-
-A Procedure with provider-reported unpublished draft changes is `DRIFT`.
-
-Overall result precedence:
+Overall precedence:
 
 ```text
-any DRIFT
-→ DRIFT
-
-else any UNVERIFIABLE
-→ UNVERIFIABLE
-
-else
-→ NO_DRIFT
+any DRIFT → DRIFT
+else any UNVERIFIABLE → UNVERIFIABLE
+else → NO_DRIFT
 ```
 
-## 10. Sanitized evidence
+Unexpected Procedures are `DRIFT`; missing expected Procedures are `DRIFT`; unpublished Procedure draft state is `DRIFT`.
 
-The harness intentionally does not emit raw:
+## 11. Sanitized evidence
+
+The report never emits raw:
 
 - API keys;
-- agent IDs;
-- Procedure IDs;
-- voice IDs;
-- prompt text;
-- First Message text;
+- agent/Procedure/voice IDs;
+- First Message;
+- System Prompt;
 - Procedure content;
 - dynamic-variable values;
 - provider HTTP error bodies;
 - raw provider responses.
 
-Textual provider content and resource identities needed for reproducible comparison are represented by SHA-256 fingerprints, plus lengths where useful.
+Text and resource identities are represented with SHA-256 fingerprints where needed.
 
-The report may contain non-secret semantic metadata such as agent name, language, LLM, resolved voice display name, dynamic-variable names, Procedure names/types and Boolean draft/version-presence indicators.
+Do not commit a generated report until it has been manually reviewed against the public-laboratory data boundary.
 
-Do not commit a report until it has been manually reviewed for the public-laboratory boundary.
+## 12. Local execution
 
-## 11. Local execution
-
-With the API key already loaded securely into the local `ELEVENLABS_API_KEY` environment variable:
+With `ELEVENLABS_API_KEY` already set securely in the local environment:
 
 ```text
 python tools/a5_provider_control.py \
@@ -268,9 +261,7 @@ python tools/a5_provider_control.py \
   --output <temporary-outside-repository-path>/a5-provider-report.json
 ```
 
-On PowerShell, keep the output outside the repository, for example under `$env:TEMP`.
-
-Never paste the key or a raw provider response into GitHub or ChatGPT.
+Use an output path outside the repository.
 
 Exit codes:
 
@@ -280,7 +271,7 @@ Exit codes:
 2 → harness/auth/provider read error
 ```
 
-## 12. Validation
+## 13. Validation
 
 Repository tests:
 
@@ -288,35 +279,31 @@ Repository tests:
 python -m unittest discover -s tests -v
 ```
 
-Current deterministic coverage verifies:
+Deterministic coverage includes:
 
 - fully pinned exact fixture → `NO_DRIFT`;
-- unpinned exact voice identity → `UNVERIFIABLE` rather than false `NO_DRIFT`;
-- material model/Procedure-type difference → `DRIFT`;
+- unpinned provider fields → `UNVERIFIABLE`;
+- material model/Procedure drift → `DRIFT`;
 - missing Procedure branch metadata → `UNVERIFIABLE`;
-- sanitized snapshot excludes raw prompt/First Message and provider resource IDs;
-- endpoint allowlist accepts only the five required A5 GET endpoint shapes and rejects adjacent draft/compile/settings paths.
+- sanitized output excludes raw sensitive/provider content;
+- reserved adjacent endpoint tokens are rejected;
+- malformed Structured Procedure content is rejected.
 
-No live ElevenLabs call is represented by those unit tests.
+These tests do not constitute a live ElevenLabs read.
 
-## 13. Current official-risk finding: Structured Procedure + Qwen
+## 14. Known runtime risk
 
-Current official ElevenLabs documentation defines Structured Procedures as ordered typed steps. It also states that forced internal tool choice used for procedure transitions/completion is supported by major OpenAI, Anthropic, Gemini and Grok model families, while other models/custom providers may not guarantee those transitions.
+A5 READ-ONLY inspection is not blocked by Qwen.
 
-A5 preserves Qwen because Albert explicitly authorized that preservation.
-
-This produces the following classification:
+Future runtime reliance on Structured Procedure transitions with Qwen remains:
 
 ```text
-A5 READ_ONLY INSPECTION: NOT BLOCKED
-
-FUTURE STRUCTURED-PROCEDURE RUNTIME RELIABILITY WITH QWEN:
 EVIDENCE REQUIRED
 ```
 
-Do not silently switch the model in A5 Phase 1.
+A5 Phase 1 must not silently change model.
 
-## 14. Not authorized
+## 15. Not authorized
 
 ```text
 ELEVENLABS WRITE
@@ -333,12 +320,13 @@ PRODUCTION / CORPORATE NETWORK
 DEPENDENCY CHANGE
 CI/WORKFLOW CHANGE
 SECRET IN CHAT OR REPOSITORY
+READY / MERGE
 ```
 
-## 15. Current stop point
+## 16. Current stop point
 
-A5 repository-side reader, expected state and deterministic comparison can be prepared and tested without a provider secret.
+Repository-side reader, expected state and deterministic comparison are prepared.
 
-A live authenticated provider read requires execution in an environment where the ElevenLabs key is available securely. If that execution is not available, the provider snapshot and actual `DRIFT / NO_DRIFT / UNVERIFIABLE` result remain `NOT_RUN`; they must not be guessed.
+Live authenticated provider inspection remains `NOT_RUN` until the harness is executed in a secure environment containing the ElevenLabs key.
 
 No canonical-state update required.
