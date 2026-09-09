@@ -17,7 +17,7 @@ class T(unittest.TestCase):
         return {"agent":{"name":e["name"],"language":e["language"],"first_message":"provider greeting",
                          "system_prompt":e["system_prompt"],
                          "llm":{"id":e["llm"]["id"],"temperature":0.1,"max_tokens":-1},
-                         "voice":{"name":e["voice"]["name"],"id_sha256":"voicehash","tts_model_id":"model",
+                         "voice":{"name":e["voice"]["name"],"id_sha256":e["voice"]["id_sha256"] or "voicehash","tts_model_id":"model",
                                   "stability":0.5,"speed":1.0,"similarity_boost":0.8},
                          "dynamic_variable_names":sorted(e["dynamic_variable_names"])},
                 "procedures":ps,"procedures_gap":None,
@@ -42,12 +42,20 @@ class T(unittest.TestCase):
         fields={x["field"]:x["status"] for x in r}
         self.assertEqual("UNVERIFIABLE",fields["agent.first_message"])
         self.assertEqual("UNVERIFIABLE",fields["agent.llm.temperature"])
-        self.assertEqual("UNVERIFIABLE",fields["agent.voice.id_sha256"])
+        self.assertEqual("NO_DRIFT",fields["agent.voice.id_sha256"])
 
     def test_material_difference_is_drift(self):
         a=self.actual(); a["agent"]["llm"]["id"]="other"; a["procedures"][0]["type"]="free_form"
         r=a5.compare_expected(self.pinned(),a)
         self.assertEqual("DRIFT",a5.overall_status(r))
+
+    def test_pinned_voice_resource_difference_is_drift(self):
+        a=self.actual()
+        a["agent"]["voice"]["id_sha256"]="different-voice-fingerprint"
+        r=a5.compare_expected(self.expected,a)
+        fields={x["field"]:x["status"] for x in r}
+        self.assertEqual("DRIFT",a5.overall_status(r))
+        self.assertEqual("DRIFT",fields["agent.voice.id_sha256"])
 
     def test_missing_branch_is_unverifiable(self):
         a=self.actual(); a["procedures"]=None; a["procedures_gap"]="no branch"

@@ -22,8 +22,8 @@
       "max_tokens": null
     },
     "voice": {
-      "name": "Eric",
-      "id_sha256": null,
+      "name": "Eric - Smooth, Trustworthy",
+      "id_sha256": "1e0c5d7793b1296cb88ddddf08040c9e901c241640ff7e88fcad1c31c7392bc9",
       "tts_model_id": null,
       "stability": null,
       "speed": null,

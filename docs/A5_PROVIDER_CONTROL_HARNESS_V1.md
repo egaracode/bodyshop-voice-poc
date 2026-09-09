@@ -60,11 +60,14 @@ Albert authorized A5 to preserve initially:
 ```text
 LLM family/model: Qwen3.5-397B-A17B
 ElevenLabs API LLM id: qwen35-397b-a17b
-voice display name: Eric
+voice display name: Eric - Smooth, Trustworthy
+voice resource fingerprint: 1e0c5d7793b1296cb88ddddf08040c9e901c241640ff7e88fcad1c31c7392bc9
 dynamic-variable names: exactly 10
 ```
 
 The API identifier is the machine-comparison value. ElevenLabs documents `qwen35-397b-a17b` as the API LLM option for the human-facing Qwen3.5-397B-A17B model, so those two spellings do not represent a model change.
+
+For the current PoC, Albert authorizes `Eric - Smooth, Trustworthy` as the exact temporary provider voice corresponding to the earlier shorthand `Eric`. The raw provider `voice_id` is not committed; its SHA-256 fingerprint is the repository comparison authority. This is not the final production voice choice. Spanish-native voice evaluation is deferred to a later block.
 
 The exact First Message was not specified by A2/A3 or the A5 authority decision. Therefore V1 deliberately leaves it unpinned and reports it `UNVERIFIABLE` while still reading and fingerprinting the provider value.
 
@@ -73,7 +76,6 @@ Likewise, provider settings that are officially exposed but were not explicitly 
 ```text
 LLM temperature
 LLM max_tokens
-voice_id fingerprint
 TTS model_id
 TTS stability
 TTS speed
