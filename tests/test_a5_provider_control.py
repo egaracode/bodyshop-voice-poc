@@ -1,3 +1,4 @@
+import copy
 import importlib.util
 import json
 import pathlib
@@ -19,6 +20,11 @@ class A5ProviderControlTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         cls.expected = json.loads(EXPECTED_PATH.read_text(encoding="utf-8"))
+
+    def pinned_expected(self):
+        expected = copy.deepcopy(self.expected)
+        expected["agent"]["voice"]["id_sha256"] = "fixture-voice-hash"
+        return expected
 
     def exact_actual(self):
         exp = self.expected
@@ -46,7 +52,10 @@ class A5ProviderControlTests(unittest.TestCase):
                 "first_message": exp["agent"]["first_message"],
                 "system_prompt": exp["agent"]["system_prompt"],
                 "llm": exp["agent"]["llm"],
-                "voice_name": exp["agent"]["voice"]["name"],
+                "voice": {
+                    "name": exp["agent"]["voice"]["name"],
+                    "id_sha256": "fixture-voice-hash",
+                },
                 "dynamic_variable_names": sorted(exp["agent"]["dynamic_variable_names"]),
             },
             "procedures": procedures,
@@ -56,21 +65,29 @@ class A5ProviderControlTests(unittest.TestCase):
                 "branch_present": True,
                 "main_branch_present": False,
                 "version_id_sha256": None,
-                "branch_id_sha256": "fixture",
+                "branch_id_sha256": "fixture-branch-hash",
                 "main_branch_id_sha256": None,
             },
         }
 
-    def test_exact_state_is_no_drift(self):
-        results = a5.compare_expected(self.expected, self.exact_actual())
+    def test_exact_pinned_state_is_no_drift(self):
+        results = a5.compare_expected(self.pinned_expected(), self.exact_actual())
         self.assertEqual("NO_DRIFT", a5.overall_status(results))
         self.assertTrue(all(item["status"] == "NO_DRIFT" for item in results))
+
+    def test_unpinned_voice_identity_is_unverifiable(self):
+        results = a5.compare_expected(self.expected, self.exact_actual())
+        self.assertEqual("UNVERIFIABLE", a5.overall_status(results))
+        voice_result = next(
+            item for item in results if item["field"] == "agent.voice.id_sha256"
+        )
+        self.assertEqual("UNVERIFIABLE", voice_result["status"])
 
     def test_material_difference_is_drift(self):
         actual = self.exact_actual()
         actual["agent"]["llm"] = "different-model"
         actual["procedures"][0]["type"] = "free_form"
-        results = a5.compare_expected(self.expected, actual)
+        results = a5.compare_expected(self.pinned_expected(), actual)
         self.assertEqual("DRIFT", a5.overall_status(results))
         drift_fields = {item["field"] for item in results if item["status"] == "DRIFT"}
         self.assertIn("agent.llm", drift_fields)
@@ -80,7 +97,7 @@ class A5ProviderControlTests(unittest.TestCase):
         actual = self.exact_actual()
         actual["procedures"] = None
         actual["procedures_gap"] = "Provider did not expose branch_id"
-        results = a5.compare_expected(self.expected, actual)
+        results = a5.compare_expected(self.pinned_expected(), actual)
         self.assertEqual("UNVERIFIABLE", a5.overall_status(results))
         statuses = {
             item["field"]: item["status"]
@@ -98,6 +115,27 @@ class A5ProviderControlTests(unittest.TestCase):
         self.assertNotIn("agent_id", rendered)
         self.assertNotIn("procedure_id", rendered)
         self.assertIn("system_prompt_sha256", rendered)
+        self.assertIn("id_sha256", rendered)
+
+    def test_endpoint_allowlist_accepts_only_required_read_shapes(self):
+        allowed = [
+            "/v1/convai/agents",
+            "/v1/convai/agents/agent_123",
+            "/v1/convai/agents/agent_123/branches/branch_1/procedures",
+            "/v1/convai/agents/agent_123/branches/branch_1/procedures/proc_1",
+            "/v1/voices/voice_123",
+        ]
+        denied = [
+            "/v1/convai/agents-delete",
+            "/v1/convai/agents/agent_123/branches",
+            "/v1/convai/agents/agent_123/branches/branch_1/procedures/proc_1/draft",
+            "/v1/voices/voice_123/settings",
+            "/v1/convai/agents/agent_123/branches/branch_1/procedures/compile",
+        ]
+        for path in allowed:
+            self.assertTrue(a5.path_is_allowlisted(path), path)
+        for path in denied:
+            self.assertFalse(a5.path_is_allowlisted(path), path)
 
 
 if __name__ == "__main__":
