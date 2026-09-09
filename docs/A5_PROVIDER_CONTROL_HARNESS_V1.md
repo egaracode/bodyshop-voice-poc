@@ -298,7 +298,9 @@ Deterministic coverage includes:
 - missing Procedure branch metadata → `UNVERIFIABLE`;
 - sanitized output excludes raw sensitive/provider content;
 - reserved adjacent endpoint tokens are rejected;
-- malformed Structured Procedure content is rejected.
+- malformed Structured Procedure content is rejected;
+- outer whitespace remains material under exact text comparison;
+- duplicate Procedure names fail closed instead of being silently collapsed.
 
 These tests do not constitute a live ElevenLabs read.
 
@@ -336,10 +338,43 @@ READY / MERGE
 
 ## 16. Current stop point
 
-Repository-side reader, expected state and deterministic comparison are prepared.
+A5 Phase 1 repository-side harness is implemented and validated.
 
-The first authenticated LIVE read was executed read-only against repository head `c2caf56c869abe83363c8fc769e2bd7ef129caf9` and returned `DRIFT`. That run established real provider drift and also exposed the Qwen display-name/API-id comparison false positive corrected after that head.
+Exact validated GitHub head:
 
-Because any expected-state change moves the head and invalidates prior exact-head validation as final evidence, the corrected head must be retested and then re-read read-only before final A5 audit.
+`ae1c23cb526b168004b84a8e8a7090d61e12d8c9`
+
+Repository validation before this final-audit correction:
+
+```text
+8 tests / 8 PASS
+CI: NOT CONFIGURED / NOT APPLICABLE
+```
+
+Authenticated LIVE read-only comparison was executed on that exact head and returned:
+
+```text
+A5_PROVIDER_RESULT: DRIFT
+```
+
+Confirmed aligned:
+
+```text
+agent.name
+agent.language
+agent.llm.id
+agent.dynamic_variable_names
+procedures.Technician pre-close.type
+```
+
+Material provider drift remains in System Prompt, temporary voice resource and expected Procedure configuration.
+
+Final audit identified two repository-side exactness corrections required before Ready:
+
+exact text comparison must not strip outer whitespace, and duplicate Procedure names must fail closed.
+
+After those corrections change the head, repository tests and one authenticated READ-ONLY provider comparison must be repeated against the new exact SHA.
+
+No provider write, Publish, Ready or merge is authorized by Phase 1.
 
 No canonical-state update required.

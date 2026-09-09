@@ -25,7 +25,7 @@ def normalize_text(value: Any) -> str | None:
         return None
     if not isinstance(value, str):
         raise HarnessError(f"Expected text, got {type(value).__name__}")
-    return value.replace("\r\n", "\n").replace("\r", "\n").strip()
+    return value.replace("\r\n", "\n").replace("\r", "\n")
 
 def canonical_structured_content(value: Any) -> str:
     if isinstance(value, str):
@@ -211,6 +211,19 @@ def compare_text(results,field,expected,actual):
                     "expected_sha256":sha256_text(exp),"actual_sha256":sha256_text(act),
                     "expected_length":len(exp),"actual_length":len(act)})
 
+def procedures_by_unique_name(procedures: list[dict[str,Any]], source: str) -> dict[str,dict[str,Any]]:
+    indexed={}
+    for procedure in procedures:
+        if not isinstance(procedure,dict):
+            raise HarnessError(f"{source} Procedure is not an object")
+        name=procedure.get("name")
+        if not isinstance(name,str) or not name:
+            raise HarnessError(f"{source} Procedure has no valid name")
+        if name in indexed:
+            raise HarnessError(f"{source} contains duplicate Procedure name {name!r}")
+        indexed[name]=procedure
+    return indexed
+
 def compare_expected(expected: dict[str,Any], actual: dict[str,Any]) -> list[dict[str,Any]]:
     r=[]; e=expected["agent"]; a=actual["agent"]
     compare_scalar(r,"agent.name",e.get("name"),a.get("name"))
@@ -225,13 +238,13 @@ def compare_expected(expected: dict[str,Any], actual: dict[str,Any]) -> list[dic
     if av is None: r.append(result("agent.dynamic_variable_names","UNVERIFIABLE",expected=ev))
     else: r.append(result("agent.dynamic_variable_names","NO_DRIFT" if ev==sorted(av) else "DRIFT",ev,sorted(av)))
 
-    ep={p["name"]:p for p in expected.get("procedures",[])}
+    ep=procedures_by_unique_name(expected.get("procedures",[]),"Expected configuration")
     raw=actual.get("procedures")
     if raw is None:
         note=actual.get("procedures_gap") or "Procedures unavailable"
         for name in sorted(ep): r.append(result(f"procedures.{name}","UNVERIFIABLE",note=note))
         return r
-    ap={p.get("name"):p for p in raw if p.get("name")}
+    ap=procedures_by_unique_name(raw,"Provider state")
     for name in sorted(set(ep)|set(ap)):
         ex=ep.get(name); ac=ap.get(name)
         if ex is None: r.append(result(f"procedures.{name}","DRIFT",note="Unexpected provider Procedure")); continue

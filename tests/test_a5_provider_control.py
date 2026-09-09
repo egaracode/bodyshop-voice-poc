@@ -49,6 +49,20 @@ class T(unittest.TestCase):
         r=a5.compare_expected(self.pinned(),a)
         self.assertEqual("DRIFT",a5.overall_status(r))
 
+    def test_outer_whitespace_is_material_drift(self):
+        a=self.actual()
+        a["agent"]["system_prompt"]=" " + a["agent"]["system_prompt"]
+        r=a5.compare_expected(self.pinned(),a)
+        fields={x["field"]:x["status"] for x in r}
+        self.assertEqual("DRIFT",a5.overall_status(r))
+        self.assertEqual("DRIFT",fields["agent.system_prompt"])
+
+    def test_duplicate_provider_procedure_names_fail_closed(self):
+        a=self.actual()
+        a["procedures"].append(copy.deepcopy(a["procedures"][0]))
+        with self.assertRaises(a5.HarnessError):
+            a5.compare_expected(self.pinned(),a)
+
     def test_pinned_voice_resource_difference_is_drift(self):
         a=self.actual()
         a["agent"]["voice"]["id_sha256"]="different-voice-fingerprint"
