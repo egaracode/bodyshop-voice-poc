@@ -1,135 +1,134 @@
-# BODYSHOP Voice PoC Roadmap — A2 to A6 V1
+# BODYSHOP Voice PoC Roadmap — A2 to A7 V2
 
 ## 1. Purpose
 
-This document records the agreed functional sequence for the isolated `egaracode/bodyshop-voice-poc` laboratory after completion of the A2 conversational foundation and merge of the A3 conversational verification/test contract.
+This document records the current authorized functional sequence for the isolated `egaracode/bodyshop-voice-poc` laboratory.
 
-It is a roadmap and sequencing contract only. It does not by itself authorize implementation of A4, A5 or A6.
+It supersedes the previous A2→A6 sequence while preserving the same repository and safety boundaries. It is a sequencing contract only; later blocks still require their own Issue, branch, validation and Albert authorization.
 
-## 2. Agreed sequence
+## 2. Current sequence
 
 ```text
 A2  Conversational Foundation
-     ✅ MERGED
+    MERGED
 
 A3  Conversational Verification
     + ElevenLabs Test Contract
-     ✅ MERGED
+    MERGED
 
 A4  ElevenLabs Sandbox Agent
-    real configuration, still isolated
-     ← NEXT
+    CLOSED / SUPERSEDED / NOT_PASS
+    PR #13 CLOSED UNMERGED
 
-A5  Voice / audio validation
+A5  ChatGPT ↔ ElevenLabs Provider Control Harness
+    ACTIVE
+    Phase 1 READ_ONLY
+
+A6  Voice / Audio Validation
     phone + F400 + walkie/Zello
     PLANNED
 
-A6  Future integration evaluation
-    with BODYSHOP PRO
-    only if the previous blocks pass
+A7  Future BODYSHOP Integration Evaluation
+    only if preceding evidence is acceptable
     GATED
 ```
 
-## 3. Block status and intent
+## 3. A2 and A3
 
-### A2 — Conversational Foundation
+A2 and A3 remain the merged semantic and verification authority for the Voice PoC.
+
+A2 defines the conversational/domain semantics. A3 defines the verification contract and ownership boundaries.
+
+Neither block is reopened by this roadmap reconciliation.
+
+## 4. A4 closure
+
+A4 attempted to establish an isolated ElevenLabs sandbox agent and provider-native verification.
+
+Final classification:
+
+```text
+A4_RESULT: SUPERSEDED_BY_PROVIDER_CONTROL_REQUIREMENT
+A4_OVERALL: NOT_PASS
+READY: NO
+MERGE: NO
+PR_13: CLOSED_UNMERGED
+```
+
+A4 produced useful historical provider/configuration evidence, but manual Dashboard synchronization was not sufficiently reproducible. Its unmerged branch/head is evidence only and is not configuration authority for A5.
+
+## 5. A5 — Provider Control Harness
 
 Status:
 
 ```text
-MERGED
+ACTIVE
+PHASE_1: READ_ONLY
 ```
 
-A2 established the minimum conversational foundation for the PoC, including guided conversation, phone vs shared-walkie activation, non-intervention behavior, contextual intent interpretation, technician pre-close semantics, ambiguity handling, selective confirmation, bounded recovery and the ElevenLabs provider boundary.
+A5 establishes a safe, authenticated, read-only path to inspect the effective ElevenLabs `AI Control` sandbox configuration, normalize it and compare it reproducibly with a GitHub-owned expected configuration.
 
-A2 is complete and is not reopened by this roadmap.
-
-### A3 — Conversational Verification + ElevenLabs Test Contract
-
-Status:
+A5 introduces:
 
 ```text
-MERGED
+A5_EXPECTED_PROVIDER_CONFIGURATION_V1
 ```
 
-A3 converted the A2 conversational behavior into an explicit PASS/FAIL verification contract and mapped each verification concern to the appropriate owning layer, including ElevenLabs-native testing, adapter-required checks, hybrid verification, BODYSHOP domain assertions and A5 real-audio validation.
+as the configuration authority for the sandbox.
 
-A3 was merged through PR #9.
-
-`A3 MERGED` means the verification/test contract is versioned in `main`. It does **not** mean ElevenLabs runtime tests have already been executed.
-
-The A3 contract explicitly preserves:
+Authority rules:
 
 ```text
-RUNTIME_TEST_EXECUTION: NOT_STARTED
-ELEVENLABS_AGENT: NOT_CREATED_BY_A3
+A2/A3
+→ semantic authority
+
+A5_EXPECTED_PROVIDER_CONFIGURATION_V1
+→ provider configuration authority
+
+PR #13 / head 1de7cf9cda806af7b355e3228585cb115347c049
+→ historical evidence only
 ```
 
-### A4 — ElevenLabs Sandbox Agent
+No A4 value is inherited automatically when it conflicts with the explicit A5 decision.
 
-Status:
+Phase 1 remains strictly read-only. No provider write, Publish, versioning activation, provider branch creation, mutation or runtime integration is authorized.
 
-```text
-NEXT
-```
+## 6. A6 — Voice / Audio Validation
 
-A4 is the next functional block.
-
-A4 is the first block intended to create/configure a real ElevenLabs agent in a sandbox context.
-
-It must remain isolated from BODYSHOP PRO production/runtime and from any real operational action.
-
-A4 requires its own Issue, branch, validation and PR. This roadmap synchronization does not authorize A4 implementation by itself.
-
-### A5 — Voice / Audio Validation
-
-Status:
-
-```text
-PLANNED
-```
-
-A5 is intended to validate the voice/audio behavior through the relevant laboratory channels and devices:
+A6 is the later laboratory block for real audio/channel validation through the relevant paths and devices:
 
 ```text
 phone
 +
-F400
+UNIWA F400
 +
 walkie / Zello
 ```
 
-This block is where real audio/channel behavior can be evaluated separately from purely semantic or textual conversational verification.
+A6 owns acoustic/transport concerns such as clipping, overlap, PTT timing, radio compression and repeated real-audio robustness.
 
-A5 does not begin through this roadmap document.
+A6 is not authorized by A5.
 
-### A6 — Future Integration Evaluation with BODYSHOP PRO
+## 7. A7 — Future BODYSHOP Integration Evaluation
 
-Status:
+A7 is a gated future evaluation only.
 
-```text
-GATED FUTURE EVALUATION
-```
+It may evaluate a future integration path with BODYSHOP PRO only after the isolated Voice PoC has accumulated acceptable semantic, provider-control and audio evidence.
 
-A6 is not an implementation authorization.
+A7 does not authorize Supabase, `AI-Control-Workshop`, production, corporate-network or lifecycle changes.
 
-Its purpose is to evaluate whether the isolated Voice PoC has produced enough verified evidence to consider a future integration path with BODYSHOP PRO.
-
-A6 may only be considered if the preceding blocks have produced acceptable evidence and passed their own acceptance criteria.
-
-## 4. Sequencing rule
-
-The intended progression is:
+## 8. Sequencing rule
 
 ```text
 A2 MERGED
-→ A3 CONTRACT MERGED
-→ A4 SANDBOX
-→ A5 REAL VOICE/AUDIO VALIDATION
-→ A6 INTEGRATION EVALUATION
+→ A3 MERGED
+→ A4 CLOSED / SUPERSEDED / NOT_PASS
+→ A5 PROVIDER CONTROL HARNESS
+→ A6 REAL VOICE/AUDIO VALIDATION
+→ A7 FUTURE INTEGRATION EVALUATION
 ```
 
-Each block remains independently governed by the repository working method:
+Each block remains governed by:
 
 ```text
 one objective
@@ -141,16 +140,16 @@ one objective
 → manual merge
 ```
 
-No later block is implicitly authorized merely because it appears in this roadmap.
-
-## 5. Repository and safety boundary
+## 9. Safety boundary
 
 This roadmap does not authorize:
 
 ```text
-ElevenLabs API/runtime use
+ElevenLabs writes or Publish
+provider versioning activation
+provider branch creation or deployment
 Zello API use
-phone integration
+phone/SIP integration
 F400 runtime changes
 Supabase
 AI-Control-Workshop changes
@@ -158,31 +157,25 @@ production use
 corporate-network use
 dependencies
 CI/workflow changes
+secrets in chat or public repository
 automation with real operational impact
 ```
 
-Any such work requires a separately authorized functional block.
+Any expansion requires separate explicit authorization.
 
-## 6. Canonical relationship
+## 10. Canonical relationship
 
 `egaracode/bodyshop-voice-poc` remains an isolated parallel laboratory.
 
-`egaracode/AI-Control-Workshop` remains the canonical BODYSHOP PRO repository and is not modified by this roadmap.
+`egaracode/AI-Control-Workshop` remains the canonical BODYSHOP PRO repository and is untouched by this roadmap.
 
-No canonical-state update is required by this documentation-only roadmap synchronization.
+No canonical-state update required.
 
-## 7. Current roadmap position
-
-```text
-COMPLETED: A2 Conversational Foundation
-COMPLETED: A3 Conversational Verification + ElevenLabs Test Contract
-NEXT:      A4 ElevenLabs Sandbox Agent
-LATER:     A5 → A6
-```
-
-## 8. Stop point
+## 11. Current stop model
 
 ```text
-ROADMAP_SYNCED_AFTER_A3
-A4_IMPLEMENTATION_NOT_STARTED
+ACTIVE_BLOCK: A5
+AUTHORIZED_PHASE: READ_ONLY
+NEXT_LATER_BLOCK: A6
+FUTURE_GATED_BLOCK: A7
 ```
