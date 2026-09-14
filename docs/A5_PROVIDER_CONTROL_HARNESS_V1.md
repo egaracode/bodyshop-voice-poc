@@ -338,43 +338,32 @@ READY / MERGE
 
 ## 16. Current stop point
 
-A5 Phase 1 repository-side harness is implemented and validated.
+A5 Phase 1 repository-side harness is implemented.
 
-Exact validated GitHub head:
+Exact-head validation evidence is maintained in PR #15 rather than embedded in this document, because any repository commit changes the PR head and would immediately stale a hard-coded validation SHA.
 
-`ae1c23cb526b168004b84a8e8a7090d61e12d8c9`
-
-Repository validation before this final-audit correction:
+Before final A5 Phase 1 audit, the current exact PR head must have all of the following evidence:
 
 ```text
-8 tests / 8 PASS
-CI: NOT CONFIGURED / NOT APPLICABLE
+repository tests: PASS
+git diff --check: PASS
+authenticated ElevenLabs comparison: READ_ONLY / GET-only
+GitHub LIVE main/head/PR state: revalidated
+CI/status evidence: recorded for the exact head
 ```
 
-Authenticated LIVE read-only comparison was executed on that exact head and returned:
+A Phase 1 provider result of `DRIFT` is valid evidence. Phase 1 succeeds by detecting provider drift reproducibly and safely; it does not require the provider itself to be corrected to `NO_DRIFT`.
+
+Any provider correction belongs to a separately authorized controlled-write phase and must follow:
 
 ```text
-A5_PROVIDER_RESULT: DRIFT
+proposed diff
+? Albert approval
+? provider write
+? re-read
+? exact verification
 ```
 
-Confirmed aligned:
-
-```text
-agent.name
-agent.language
-agent.llm.id
-agent.dynamic_variable_names
-procedures.Technician pre-close.type
-```
-
-Material provider drift remains in System Prompt, temporary voice resource and expected Procedure configuration.
-
-Final audit identified two repository-side exactness corrections required before Ready:
-
-exact text comparison must not strip outer whitespace, and duplicate Procedure names must fail closed.
-
-After those corrections change the head, repository tests and one authenticated READ-ONLY provider comparison must be repeated against the new exact SHA.
-
-No provider write, Publish, Ready or merge is authorized by Phase 1.
+No provider write, Publish, provider branch/version mutation, Ready or merge is authorized by A5 Phase 1.
 
 No canonical-state update required.
