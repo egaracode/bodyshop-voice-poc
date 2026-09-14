@@ -21,12 +21,13 @@ A4  ElevenLabs Sandbox Agent
     PR #13 CLOSED UNMERGED
 
 A5  ChatGPT ↔ ElevenLabs Provider Control Harness
-    ACTIVE
-    Phase 1 READ_ONLY
+    MERGED
+    Phase 1 READ_ONLY COMPLETE / PASS
+    Provider result: DRIFT
 
 A6  Voice / Audio Validation
     phone + F400 + walkie/Zello
-    PLANNED
+    PLANNED / NOT AUTHORIZED
 
 A7  Future BODYSHOP Integration Evaluation
     only if preceding evidence is acceptable
@@ -62,8 +63,11 @@ A4 produced useful historical provider/configuration evidence, but manual Dashbo
 Status:
 
 ```text
-ACTIVE
-PHASE_1: READ_ONLY
+MERGED
+PR: #15
+MERGE_COMMIT: 0f55db18b20446d1f69d4cc5a7860238debc747d
+PHASE_1: READ_ONLY COMPLETE / PASS
+PROVIDER_RESULT: DRIFT
 ```
 
 A5 establishes a safe, authenticated, read-only path to inspect the effective ElevenLabs `AI Control` sandbox configuration, normalize it and compare it reproducibly with a GitHub-owned expected configuration.
@@ -91,7 +95,9 @@ PR #13 / head 1de7cf9cda806af7b355e3228585cb115347c049
 
 No A4 value is inherited automatically when it conflicts with the explicit A5 decision.
 
-Phase 1 remains strictly read-only. No provider write, Publish, versioning activation, provider branch creation, mutation or runtime integration is authorized.
+Phase 1 completed strictly read-only. No provider write, Publish, provider branch/version mutation or runtime integration occurred. The final provider verdict remained `DRIFT`; that is valid Phase-1 evidence because A5 proves reproducible drift detection rather than provider correction.
+
+Any future controlled provider write requires a separate authorization path.
 
 ## 6. A6 — Voice / Audio Validation
 
@@ -107,7 +113,7 @@ walkie / Zello
 
 A6 owns acoustic/transport concerns such as clipping, overlap, PTT timing, radio compression and repeated real-audio robustness.
 
-A6 is not authorized by A5.
+A6 is PLANNED and is not authorized by the completion or merge of A5.
 
 ## 7. A7 — Future BODYSHOP Integration Evaluation
 
@@ -123,9 +129,9 @@ A7 does not authorize Supabase, `AI-Control-Workshop`, production, corporate-net
 A2 MERGED
 → A3 MERGED
 → A4 CLOSED / SUPERSEDED / NOT_PASS
-→ A5 PROVIDER CONTROL HARNESS
-→ A6 REAL VOICE/AUDIO VALIDATION
-→ A7 FUTURE INTEGRATION EVALUATION
+→ A5 PROVIDER CONTROL HARNESS MERGED / PHASE 1 COMPLETE
+→ A6 REAL VOICE/AUDIO VALIDATION PLANNED / NOT AUTHORIZED
+→ A7 FUTURE INTEGRATION EVALUATION GATED
 ```
 
 Each block remains governed by:
@@ -174,8 +180,10 @@ No canonical-state update required.
 ## 11. Current stop model
 
 ```text
-ACTIVE_BLOCK: A5
-AUTHORIZED_PHASE: READ_ONLY
+ACTIVE_BLOCK: NONE
+A5: MERGED / PHASE_1_COMPLETE / PASS
+A5_PROVIDER_RESULT: DRIFT
 NEXT_LATER_BLOCK: A6
+A6_STATUS: PLANNED / NOT_AUTHORIZED
 FUTURE_GATED_BLOCK: A7
 ```
