@@ -27,11 +27,13 @@ A5  ChatGPT ↔ ElevenLabs Provider Control Harness
 
 A6  Voice / Audio Validation
     phone + F400 + walkie/Zello
-    PLANNED / NOT AUTHORIZED
+    ACTIVE / AUTHORIZED
+    Issue #18
+    provider-dependent expected-config PASS gated by current DRIFT
 
 A7  Future BODYSHOP Integration Evaluation
     only if preceding evidence is acceptable
-    GATED
+    GATED / NOT AUTHORIZED
 ```
 
 ## 3. A2 and A3
@@ -41,6 +43,8 @@ A2 and A3 remain the merged semantic and verification authority for the Voice Po
 A2 defines the conversational/domain semantics. A3 defines the verification contract and ownership boundaries.
 
 Neither block is reopened by this roadmap reconciliation.
+
+A3 uses the historical owner label `A5_REAL_AUDIO_REQUIRED` for real-device/audio cases. Because the roadmap was later resequenced, that historical ownership maps to current A6 without changing A3 semantics.
 
 ## 4. A4 closure
 
@@ -101,19 +105,36 @@ Any future controlled provider write requires a separate authorization path.
 
 ## 6. A6 — Voice / Audio Validation
 
-A6 is the later laboratory block for real audio/channel validation through the relevant paths and devices:
+Status:
 
 ```text
-phone
+ACTIVE
+AUTHORIZED: 2026-09-14
+ISSUE: #18
+BASE_MAIN: 7f6150b69f007aeea0e38cd5159eb2e244ff3e32
+PROVIDER_WRITE: NOT_AUTHORIZED
+A7: NOT_AUTHORIZED
+```
+
+A6 is the current laboratory block for real audio/channel validation through the relevant available paths and devices:
+
+```text
+existing direct phone path, if already available
 +
 UNIWA F400
 +
 walkie / Zello
 ```
 
-A6 owns acoustic/transport concerns such as clipping, overlap, PTT timing, radio compression and repeated real-audio robustness.
+A6 owns acoustic/transport concerns such as clipping, overlap, PTT timing, microphone/speaker behavior, radio/transport compression, intelligibility, measured end-to-end latency and repeated real-audio robustness.
 
-A6 is PLANNED and is not authorized by the completion or merge of A5.
+A6 does not silently provision a new phone/SIP path or AI Control → Zello/F400 bridge. Missing integration surfaces are recorded as `NOT_AVAILABLE` rather than created inside A6.
+
+Because A5 ended with provider `DRIFT`, hardware/transport results may be validated independently, while provider-dependent AI audio evidence must be tied to a fresh A5 GET-only baseline. Evidence from a drifted provider cannot be represented as PASS for the expected GitHub configuration.
+
+A6 execution contract:
+
+`docs/A6_REAL_VOICE_AUDIO_VALIDATION_V1.md`
 
 ## 7. A7 — Future BODYSHOP Integration Evaluation
 
@@ -130,8 +151,8 @@ A2 MERGED
 → A3 MERGED
 → A4 CLOSED / SUPERSEDED / NOT_PASS
 → A5 PROVIDER CONTROL HARNESS MERGED / PHASE 1 COMPLETE
-→ A6 REAL VOICE/AUDIO VALIDATION PLANNED / NOT AUTHORIZED
-→ A7 FUTURE INTEGRATION EVALUATION GATED
+→ A6 REAL VOICE/AUDIO VALIDATION ACTIVE / AUTHORIZED
+→ A7 FUTURE INTEGRATION EVALUATION GATED / NOT AUTHORIZED
 ```
 
 Each block remains governed by:
@@ -154,9 +175,10 @@ This roadmap does not authorize:
 ElevenLabs writes or Publish
 provider versioning activation
 provider branch creation or deployment
-Zello API use
-phone/SIP integration
-F400 runtime changes
+Zello API use or automation
+new phone/SIP provisioning or integration
+AI Control → Zello/F400 bridge implementation
+F400 software/runtime modification beyond ordinary lab configuration needed to execute authorized tests
 Supabase
 AI-Control-Workshop changes
 production use
@@ -167,7 +189,7 @@ secrets in chat or public repository
 automation with real operational impact
 ```
 
-Any expansion requires separate explicit authorization.
+A6 may use the existing isolated lab phone, F400 and Zello application/accounts for the explicitly authorized real-audio tests in Issue #18. Any expansion requires separate explicit authorization.
 
 ## 10. Canonical relationship
 
@@ -180,10 +202,13 @@ No canonical-state update required.
 ## 11. Current stop model
 
 ```text
-ACTIVE_BLOCK: NONE
+ACTIVE_BLOCK: A6
 A5: MERGED / PHASE_1_COMPLETE / PASS
 A5_PROVIDER_RESULT: DRIFT
-NEXT_LATER_BLOCK: A6
-A6_STATUS: PLANNED / NOT_AUTHORIZED
+A6_STATUS: ACTIVE / AUTHORIZED
+A6_ISSUE: #18
+A6_REAL_AUDIO_EXECUTION: NOT_STARTED
+A6_PROVIDER_WRITE: NOT_AUTHORIZED
 FUTURE_GATED_BLOCK: A7
+A7_STATUS: NOT_AUTHORIZED
 ```
