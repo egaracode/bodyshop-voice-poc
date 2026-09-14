@@ -358,10 +358,10 @@ Any provider correction belongs to a separately authorized controlled-write phas
 
 ```text
 proposed diff
-? Albert approval
-? provider write
-? re-read
-? exact verification
+→ Albert approval
+→ provider write
+→ re-read
+→ exact verification
 ```
 
 No provider write, Publish, provider branch/version mutation, Ready or merge is authorized by A5 Phase 1.
