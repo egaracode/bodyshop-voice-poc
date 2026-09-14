@@ -1,0 +1,376 @@
+# A6 Real Voice / Audio Validation V1
+
+## 1. Status
+
+```text
+ISSUE: #18
+BLOCK: A6
+STATUS: ACTIVE
+BASE_MAIN: 7f6150b69f007aeea0e38cd5159eb2e244ff3e32
+PROVIDER_WRITES: FORBIDDEN
+PRODUCTION: FORBIDDEN
+A7: NOT_AUTHORIZED
+```
+
+A6 validates real laboratory audio/device/PTT/transport behavior for the isolated Voice PoC.
+
+It does not build production integration and does not correct ElevenLabs configuration.
+
+## 2. Authority and historical numbering
+
+Authority order:
+
+```text
+A2 conversational/domain semantics
+→ A3 verification principles
+→ A5 provider-configuration authority + read-only harness
+→ A6 real audio/device/transport evidence
+```
+
+A3 was written before the roadmap resequencing and uses the historical label:
+
+```text
+A5_REAL_AUDIO_REQUIRED
+```
+
+That historical owner maps to current A6. The A3 semantics are not rewritten.
+
+## 3. A5 provider-drift gate
+
+A5 Phase 1 completed with:
+
+```text
+A5_PHASE_1_REPOSITORY: PASS
+A5_PROVIDER_RESULT: DRIFT
+```
+
+Therefore A6 separates two claims:
+
+```text
+hardware / transport result
+!=
+expected-provider semantic/configuration result
+```
+
+Before any provider-dependent phone/AI test, rerun the A5 GET-only harness and record only the sanitized field verdicts.
+
+If the provider remains different from `A5_EXPECTED_PROVIDER_CONFIGURATION_V1`, AI audio/conversation results are labeled:
+
+```text
+CURRENT_PROVIDER_DRIFT_BASELINE
+```
+
+They may describe the observed current provider, but they must not be reported as PASS for the expected GitHub configuration.
+
+Changing provider configuration is outside A6 and requires separate authorization.
+
+## 4. Test topology
+
+A6 validates available laboratory legs independently.
+
+```text
+A6-A
+existing direct phone path
+↔ AI Control
+
+A6-B
+lab phone with Zello
+↔ Zello transport
+↔ UNIWA F400
+
+A6-C
+controlled acoustic/noise conditions
+applied to the available legs
+```
+
+A6 does not assume an AI Control → Zello/F400 bridge exists.
+
+If such a bridge is absent:
+
+```text
+FULL_COMBINED_PATH: NOT_AVAILABLE
+```
+
+Do not create one inside A6.
+
+## 5. Public-laboratory data boundary
+
+Use only synthetic identities and dummy operational values.
+
+Example test vocabulary:
+
+```text
+Persona Alfa
+Modelo X
+Línea Uno
+OP100
+Robot R1
+problema de prueba
+```
+
+Never commit:
+
+- real worker names;
+- real protected operational audio;
+- production identifiers;
+- credentials or API keys;
+- corporate-network information;
+- raw provider resource IDs when a sanitized fingerprint is sufficient.
+
+Raw audio may be used locally for inspection but is not committed by default.
+
+## 6. Current official technical evidence
+
+Revalidated for A6 on 2026-09-14.
+
+### 6.1 UNIWA F400
+
+Current vendor specification states the F400 provides:
+
+- Android 15;
+- dedicated PTT button;
+- front 2.5 W speaker;
+- IP65 protection;
+- Wi-Fi / 4G / Bluetooth;
+- PoC support including Zello.
+
+Reference:
+
+https://www.cwelltech.com/product/uniwa-f400-octa-core-ip65-android-15-walkie-talkie/
+
+This supports feasibility only. Actual A6 device behavior is determined by the physical test unit.
+
+### 6.2 Zello Android PTT behavior
+
+Current Zello support documentation states that Android device PTT buttons may be assigned, but its general device-button guidance says device PTT buttons operate with the screen on and talk screen in the foreground.
+
+Reference:
+
+https://support.zello.com/zc/using-volume/screen-button-for-ptt-android
+
+Zello also documents screen-off transmission for Android when an external PTT or wired/Bluetooth headset button is connected, with the active contact already selected.
+
+Reference:
+
+https://support.zello.com/zc/using-zello-while-screen-is-off-android
+
+The F400 vendor separately advertises dedicated real PTT + Zello support. Because the built-in F400 PTT implementation may present differently from a generic Android device button, A6 does not assume screen-off behavior from either source. It measures it empirically.
+
+### 6.3 ElevenLabs latency
+
+ElevenLabs distinguishes model inference latency from user-perceived time-to-first-audio (TTFA). Network, recognition, LLM, TTS and playback buffering all contribute to end-to-end voice-agent latency.
+
+References:
+
+https://elevenlabs.io/docs/eleven-api/concepts/latency
+https://elevenlabs.io/docs/eleven-api/guides/how-to/best-practices/latency-optimization
+
+A6 therefore measures the real user-perceived path rather than treating a provider model benchmark as the result.
+
+## 7. Verdict model
+
+Per scenario:
+
+```text
+PASS
+FAIL
+NOT_RUN
+NOT_AVAILABLE
+UNVERIFIABLE
+```
+
+Rules:
+
+- one prohibited/safety behavior is FAIL;
+- `NOT_AVAILABLE` is not silently converted to PASS;
+- provider `DRIFT` is not silently converted to expected-config PASS;
+- qualitative claims must be backed by repeated observation;
+- latency is recorded before defining any future product SLA.
+
+## 8. Preflight
+
+### A6-PRE-01 — Exact repository state
+
+Record:
+
+```text
+main SHA
+A6 branch SHA
+working tree clean
+```
+
+### A6-PRE-02 — Provider baseline
+
+Before A6-A provider-dependent testing:
+
+1. execute the A5 harness GET-only;
+2. record `OVERALL` and field-level statuses only;
+3. clear the API key from the local environment;
+4. do not commit generated provider output unless manually sanitized.
+
+### A6-PRE-03 — Device/channel inventory
+
+Record without secrets:
+
+```text
+F400 Android version
+Zello app version on F400
+Zello app version on phone
+network type: private Wi-Fi or public/mobile LTE
+screen state
+speaker volume setting as a relative percentage if visible
+headset/external PTT: yes/no
+existing direct phone path available: yes/no
+```
+
+Do not use the corporate network.
+
+## 9. A6-B — Zello phone ↔ F400 matrix
+
+Use the same dummy phrase set in both directions.
+
+Default repetition rule:
+
+```text
+functional scenario: 5 repetitions
+critical clipping/reliability scenario: 10 repetitions
+```
+
+Any single prohibited behavior still fails the relevant safety scenario.
+
+| ID | Direction/state | What to verify | PASS condition | Runs | Status |
+|---|---|---|---|---:|---|
+| `ZEL-01` | phone → F400, screen on | receive audio | all five complete/intelligible | 5 | NOT_RUN |
+| `ZEL-02` | F400 → phone, screen on | physical PTT + transmit | all five complete/intelligible | 5 | NOT_RUN |
+| `ZEL-03` | F400, Zello background, screen on | physical PTT behavior | actual behavior recorded; PASS only if transmission works without unintended UI dependency | 5 | NOT_RUN |
+| `ZEL-04` | F400, screen off | physical PTT behavior | actual behavior recorded; PASS only if intended transmission works reliably | 5 | NOT_RUN |
+| `ZEL-05` | phone → F400 | first-token clipping | critical first token preserved 10/10 | 10 | NOT_RUN |
+| `ZEL-06` | F400 → phone | first-token clipping | critical first token preserved 10/10 | 10 | NOT_RUN |
+| `ZEL-07` | both directions | last-token clipping | critical final token preserved 10/10 each direction | 10 | NOT_RUN |
+| `ZEL-08` | both directions | repeated transmission robustness | no dropped/empty transmission in run set | 10 | NOT_RUN |
+| `ZEL-09` | F400 receive | speaker intelligibility | dummy phrase understood without visual/text aid | 5 | NOT_RUN |
+| `ZEL-10` | F400 transmit | microphone intelligibility | dummy phrase understood without repetition | 5 | NOT_RUN |
+
+### Clipping phrase set
+
+Use clearly synthetic tokens:
+
+```text
+ALFA uno dos tres
+BRAVO modelo X línea uno
+CHARLIE OP100 robot R1
+uno dos tres OMEGA
+modelo X línea uno SIGMA
+```
+
+The critical first/last token must be heard completely; guessing from context is not PASS.
+
+## 10. A6-C — controlled noise and overlap
+
+No real workshop recording is required.
+
+Use controlled local background audio at a stable level and synthetic phrases.
+
+| ID | Condition | PASS condition | Runs | Status |
+|---|---|---|---:|---|
+| `ENV-01` | moderate controlled background noise | critical tokens remain intelligible | 5 | NOT_RUN |
+| `ENV-02` | competing nearby speech | receiver can identify whether test phrase is intelligible; no fabricated transcription claim | 5 | NOT_RUN |
+| `ENV-03` | speaker overlap / interruption | recovery behavior is observable and recorded | 5 | NOT_RUN |
+| `ENV-04` | repeat after unclear audio | second transmission recovers without stale/mixed phrase | 5 | NOT_RUN |
+
+If a condition cannot be produced consistently, use `UNVERIFIABLE` rather than inventing a result.
+
+## 11. A6-A — existing direct phone / AI Control path
+
+Execute only if an already existing isolated phone path is available.
+
+If it is not already available:
+
+```text
+A6-A: NOT_AVAILABLE
+```
+
+Do not provision SIP/telephony inside A6.
+
+Before execution, A6-PRE-02 is mandatory.
+
+Provider-dependent results must include one of:
+
+```text
+EXPECTED_PROVIDER_ALIGNED
+CURRENT_PROVIDER_DRIFT_BASELINE
+```
+
+### Phone scenarios
+
+| ID | What to measure | Evidence | Runs | Status |
+|---|---|---|---:|---|
+| `PHN-01` | successful existing-path connection | real isolated call/session | 5 | NOT_RUN |
+| `PHN-02` | first user utterance intelligibility | critical dummy tokens retained | 5 | NOT_RUN |
+| `PHN-03` | agent response intelligibility | human listener result | 5 | NOT_RUN |
+| `PHN-04` | user-end → first-agent-audio latency | milliseconds per turn | 10 | NOT_RUN |
+| `PHN-05` | overlap/interruption behavior | observed recovery | 5 | NOT_RUN |
+| `PHN-06` | unclear/clipped utterance recovery | no silent guessing; observed response recorded | 5 | NOT_RUN |
+
+For `PHN-04`, report at minimum:
+
+```text
+sample count
+minimum
+median
+maximum
+```
+
+No PASS/FAIL latency SLA is invented in V1. The measurement becomes evidence for a later threshold decision.
+
+## 12. Result record
+
+For each scenario record:
+
+```text
+Scenario ID
+Date/time
+A6 branch/head SHA
+Provider baseline classification where applicable
+Device direction
+Network type
+Screen/background state
+Run count
+PASS / FAIL / NOT_RUN / NOT_AVAILABLE / UNVERIFIABLE
+Observed clipping or dropped token
+Latency samples if applicable
+Concise sanitized notes
+```
+
+Do not commit secrets, raw provider responses, real identities or protected audio.
+
+## 13. A6 completion rules
+
+A6 is not complete merely because Zello works once.
+
+Required for final audit:
+
+- all available A6-B core transport scenarios executed;
+- controlled clipping and repeated-transmission scenarios executed;
+- A6-C robustness evidence recorded;
+- A6-A executed if an existing direct phone path is available, otherwise explicitly `NOT_AVAILABLE`;
+- current provider baseline tied to provider-dependent tests;
+- transport/device conclusions separated from provider-semantic conclusions;
+- no unauthorized configuration/integration changes;
+- complete diff reviewed;
+- exact head/status evidence recorded;
+- PR remains Draft until Albert authorizes Ready.
+
+## 14. Current stop point
+
+```text
+A6: ACTIVE
+ISSUE: #18
+REAL_AUDIO_EXECUTION: NOT_STARTED
+PROVIDER_WRITE: NOT_AUTHORIZED
+A7: NOT_AUTHORIZED
+```
+
+Next action: update the roadmap to A6 ACTIVE, then perform preflight and physical tests.
+
+No canonical-state update required.
