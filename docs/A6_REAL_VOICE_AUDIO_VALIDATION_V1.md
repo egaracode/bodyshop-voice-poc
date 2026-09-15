@@ -138,23 +138,18 @@ Reference:
 
 https://www.cwelltech.com/product/uniwa-f400-octa-core-ip65-android-15-walkie-talkie/
 
-This supports feasibility only. Actual A6 device behavior is determined by the physical test unit.
+This supports feasibility only. Actual device behavior is determined by physical evidence.
 
 ### 6.2 Zello Android PTT behavior
 
-Current Zello support documentation states that Android device PTT buttons may be assigned, but its general device-button guidance says device PTT buttons operate with the screen on and talk screen in the foreground.
+Current Zello support documentation states that Android device PTT buttons may be assigned, while its generic device-button guidance distinguishes screen-on and screen-off cases.
 
-Reference:
+References:
 
 https://support.zello.com/zc/using-volume/screen-button-for-ptt-android
-
-Zello also documents screen-off transmission for Android when an external PTT or wired/Bluetooth headset button is connected, with the active contact already selected.
-
-Reference:
-
 https://support.zello.com/zc/using-zello-while-screen-is-off-android
 
-The F400 vendor separately advertises dedicated real PTT + Zello support. Because the built-in F400 PTT implementation may present differently from a generic Android device button, A6 does not assume screen-off behavior from either source. It measures it empirically unless prior laboratory evidence already establishes the specific behavior with adequate detail.
+The F400 vendor separately advertises dedicated real PTT + Zello support. A6 therefore treats the already completed physical F400 test as stronger evidence for this specific device than generic Android behavior.
 
 ### 6.3 ElevenLabs latency
 
@@ -165,7 +160,7 @@ References:
 https://elevenlabs.io/docs/eleven-api/concepts/latency
 https://elevenlabs.io/docs/eleven-api/guides/how-to/best-practices/latency-optimization
 
-A6 therefore measures the real user-perceived path rather than treating a provider model benchmark as the result.
+A6 does not invent a historical latency figure that was never recorded.
 
 ## 7. Verdict and evidence model
 
@@ -179,7 +174,7 @@ NOT_AVAILABLE
 UNVERIFIABLE
 ```
 
-Historical laboratory observations that predate A6 and were not versioned with exact run metadata use the separate evidence label:
+Historical laboratory observations that predate A6 and were not versioned with exact per-scenario metadata use:
 
 ```text
 HISTORICAL_PHYSICAL_EVIDENCE
@@ -187,19 +182,17 @@ HISTORICAL_PHYSICAL_EVIDENCE
 
 Rules:
 
-- historical evidence may prevent unnecessary repetition of a basic capability already demonstrated;
-- historical evidence must not be upgraded into an exact A6 run count, latency figure, clipping result or environmental robustness result that was not recorded at the time;
+- historical evidence may prevent unnecessary repetition of a capability already demonstrated;
+- historical evidence must not be upgraded into an exact run count, latency figure, clipping score or other metric that was not retained;
+- a missing historical metric is `UNVERIFIABLE` from retained evidence, not `FAIL` and not a fabricated PASS;
 - one prohibited/safety behavior is FAIL;
-- `NOT_AVAILABLE` is not silently converted to PASS;
-- provider `DRIFT` is not silently converted to expected-config PASS;
-- qualitative claims must be backed by repeated observation;
-- latency is recorded before defining any future product SLA.
+- provider `DRIFT` is not silently converted to expected-config PASS.
 
 ## 8. Preflight
 
 ### A6-PRE-01 — Exact repository state
 
-Observed before physical A6 execution:
+Observed before A6 consolidation:
 
 ```text
 main SHA: 7f6150b69f007aeea0e38cd5159eb2e244ff3e32
@@ -220,110 +213,74 @@ Before A6-A provider-dependent testing:
 
 ### A6-PRE-03 — Device/channel inventory
 
-Record without secrets:
+Historical physical testing covered the available F400/Zello laboratory device path. Do not reconstruct missing app-version/volume metadata from memory.
+
+## 9. Prior physical audit carried into A6
+
+Before A6 was opened, the laboratory had already completed the physical F400/Zello audit with an overall PASS.
+
+Previously exercised surfaces included:
 
 ```text
-F400 Android version
-Zello app version on F400
-Zello app version on phone
-network type: private Wi-Fi or public/mobile LTE
-screen state
-speaker volume setting as a relative percentage if visible
-headset/external PTT: yes/no
-existing direct phone path available: yes/no
+mobile with Zello ↔ UNIWA F400 with Zello
+bidirectional communication
+F400 dedicated physical PTT
+PTT with Zello in background
+PTT / receive behavior with screen locked or off
+real audio under noise
+reception with device locked
+long-session / battery behavior
+private Wi-Fi path
+SIM / mobile-data path
 ```
 
-Do not use the corporate network.
-
-## 9. Prior physical evidence carried into A6
-
-Before A6 was opened, the laboratory had already exercised the real Zello path using the phone and the UNIWA F400.
-
-The previously observed minimum evidence is:
+Recorded historical result:
 
 ```text
-mobile with Zello ↔ UNIWA F400 with Zello: communication OK in both directions
-F400 dedicated physical PTT: operational
-basic communication: repeated successfully
+PHYSICAL_F400_ZELLO_AUDIT: PASS
+EVIDENCE_CLASS: HISTORICAL_PHYSICAL_EVIDENCE
 ```
 
-Evidence classification:
+The historical audit did not retain a per-scenario table with exact run counts, phrase-by-phrase clipping results, latency distribution or every device/app setting. Those missing details are not invented now.
 
-```text
-HISTORICAL_PHYSICAL_EVIDENCE
-```
+Therefore A6 does **not** repeat the completed physical audit merely to recreate richer metadata after the fact.
 
-Limitations of this historical evidence:
+## 10. A6-B — Zello phone ↔ F400 evidence map
 
-- exact run count was not versioned;
-- exact test phrases were not versioned;
-- no exact clipping score was recorded;
-- no latency distribution was recorded;
-- no controlled-noise/overlap result was recorded;
-- no exact A6 branch/head SHA can be attached because the observations predate A6.
+| ID | Surface | A6 treatment | Status |
+|---|---|---|---|
+| `ZEL-01` | phone → F400 basic receive | covered by prior physical audit | HISTORICAL_PHYSICAL_EVIDENCE |
+| `ZEL-02` | F400 → phone physical PTT/transmit | covered by prior physical audit | HISTORICAL_PHYSICAL_EVIDENCE |
+| `ZEL-03` | F400 PTT with Zello background | covered by prior physical audit | HISTORICAL_PHYSICAL_EVIDENCE |
+| `ZEL-04` | F400 screen locked/off behavior | covered by prior physical audit | HISTORICAL_PHYSICAL_EVIDENCE |
+| `ZEL-05` | exact first-token clipping score phone → F400 | exact score not retained | UNVERIFIABLE |
+| `ZEL-06` | exact first-token clipping score F400 → phone | exact score not retained | UNVERIFIABLE |
+| `ZEL-07` | exact last-token clipping score | exact score not retained | UNVERIFIABLE |
+| `ZEL-08` | repeated-transmission robustness | repeated basic success observed; exact run count not retained | HISTORICAL_PHYSICAL_EVIDENCE |
+| `ZEL-09` | F400 speaker intelligibility | successful real communication observed | HISTORICAL_PHYSICAL_EVIDENCE |
+| `ZEL-10` | F400 microphone intelligibility | successful real communication observed | HISTORICAL_PHYSICAL_EVIDENCE |
 
-Therefore A6 does **not** repeat basic proof that Zello can pass audio between the phone and F400 or that the F400 physical PTT can transmit under the previously tested normal condition. It still executes the narrower measurements that were not previously captured.
+The `UNVERIFIABLE` clipping metrics above are evidence-granularity gaps. They are not a request to redo the complete historical audit inside A6.
 
-## 10. A6-B — Zello phone ↔ F400 matrix
+## 11. A6-C — environment/device robustness evidence map
 
-Use the same dummy phrase set in both directions for newly executed clipping/reliability measurements.
+| ID | Condition | A6 treatment | Status |
+|---|---|---|---|
+| `ENV-01` | controlled/background noise | audio-with-noise physical test previously passed globally | HISTORICAL_PHYSICAL_EVIDENCE |
+| `ENV-02` | competing nearby speech | no retained isolated result | UNVERIFIABLE |
+| `ENV-03` | explicit speaker overlap/interruption | no retained isolated result | UNVERIFIABLE |
+| `ENV-04` | repeat after unclear audio | no retained isolated result | UNVERIFIABLE |
+| `DEV-01` | long-session / battery behavior | previously exercised with global PASS | HISTORICAL_PHYSICAL_EVIDENCE |
+| `NET-01` | private Wi-Fi | previously exercised with global PASS | HISTORICAL_PHYSICAL_EVIDENCE |
+| `NET-02` | SIM / mobile data | previously exercised with global PASS | HISTORICAL_PHYSICAL_EVIDENCE |
 
-Default repetition rule for new A6 execution:
-
-```text
-functional scenario: 5 repetitions
-critical clipping/reliability scenario: 10 repetitions
-```
-
-Any single prohibited behavior still fails the relevant safety scenario.
-
-| ID | Direction/state | What to verify | PASS condition | Runs | Status |
-|---|---|---|---|---:|---|
-| `ZEL-01` | phone → F400, screen on | basic receive audio | basic bidirectional Zello communication was previously observed | historical | HISTORICAL_PHYSICAL_EVIDENCE |
-| `ZEL-02` | F400 → phone, screen on | basic physical PTT + transmit | physical F400 PTT and transmission were previously observed | historical | HISTORICAL_PHYSICAL_EVIDENCE |
-| `ZEL-03` | F400, Zello background, screen on | physical PTT behavior | actual behavior recorded; PASS only if transmission works without unintended UI dependency | 5 | NOT_RUN |
-| `ZEL-04` | F400, screen off | physical PTT behavior | actual behavior recorded; PASS only if intended transmission works reliably | 5 | NOT_RUN |
-| `ZEL-05` | phone → F400 | first-token clipping | critical first token preserved 10/10 | 10 | NOT_RUN |
-| `ZEL-06` | F400 → phone | first-token clipping | critical first token preserved 10/10 | 10 | NOT_RUN |
-| `ZEL-07` | both directions | last-token clipping | critical final token preserved 10/10 each direction | 10 | NOT_RUN |
-| `ZEL-08` | both directions | repeated transmission robustness | no dropped/empty transmission in run set | 10 | NOT_RUN |
-| `ZEL-09` | F400 receive | speaker intelligibility | dummy phrase understood without visual/text aid | 5 | NOT_RUN |
-| `ZEL-10` | F400 transmit | microphone intelligibility | dummy phrase understood without repetition | 5 | NOT_RUN |
-
-`ZEL-01` and `ZEL-02` are not requested again merely to recreate evidence that already exists. They are not equivalent to the exact-run clipping/reliability scenarios below.
-
-### Clipping phrase set
-
-Use clearly synthetic tokens:
-
-```text
-ALFA uno dos tres
-BRAVO modelo X línea uno
-CHARLIE OP100 robot R1
-uno dos tres OMEGA
-modelo X línea uno SIGMA
-```
-
-The critical first/last token must be heard completely; guessing from context is not PASS.
-
-## 11. A6-C — controlled noise and overlap
-
-No real workshop recording is required.
-
-Use controlled local background audio at a stable level and synthetic phrases.
-
-| ID | Condition | PASS condition | Runs | Status |
-|---|---|---|---:|---|
-| `ENV-01` | moderate controlled background noise | critical tokens remain intelligible | 5 | NOT_RUN |
-| `ENV-02` | competing nearby speech | receiver can identify whether test phrase is intelligible; no fabricated transcription claim | 5 | NOT_RUN |
-| `ENV-03` | speaker overlap / interruption | recovery behavior is observable and recorded | 5 | NOT_RUN |
-| `ENV-04` | repeat after unclear audio | second transmission recovers without stale/mixed phrase | 5 | NOT_RUN |
-
-If a condition cannot be produced consistently, use `UNVERIFIABLE` rather than inventing a result.
+No new physical rerun is required merely to fill historical metadata gaps. If a later product decision requires quantified clipping, overlap or latency thresholds, that should be a targeted measurement objective with explicit acceptance criteria rather than a retroactive reconstruction.
 
 ## 12. A6-A — existing direct phone / AI Control path
 
-Execute only if an already existing isolated phone path is available.
+This surface is separate from the completed F400/Zello physical audit.
+
+Execute only if an already existing isolated phone/AI Control path is available.
 
 If it is not already available:
 
@@ -342,68 +299,58 @@ EXPECTED_PROVIDER_ALIGNED
 CURRENT_PROVIDER_DRIFT_BASELINE
 ```
 
-### Phone scenarios
-
-| ID | What to measure | Evidence | Runs | Status |
-|---|---|---|---:|---|
-| `PHN-01` | successful existing-path connection | real isolated call/session | 5 | NOT_RUN |
-| `PHN-02` | first user utterance intelligibility | critical dummy tokens retained | 5 | NOT_RUN |
-| `PHN-03` | agent response intelligibility | human listener result | 5 | NOT_RUN |
-| `PHN-04` | user-end → first-agent-audio latency | milliseconds per turn | 10 | NOT_RUN |
-| `PHN-05` | overlap/interruption behavior | observed recovery | 5 | NOT_RUN |
-| `PHN-06` | unclear/clipped utterance recovery | no silent guessing; observed response recorded | 5 | NOT_RUN |
-
-For `PHN-04`, report at minimum:
+Potential phone evidence, only if the path already exists:
 
 ```text
-sample count
-minimum
-median
-maximum
+connection/session works
+first user utterance is intelligible
+agent response is intelligible
+user-end → first-agent-audio latency can be measured
+interruption/unclear-audio behavior can be observed
 ```
 
-No PASS/FAIL latency SLA is invented in V1. The measurement becomes evidence for a later threshold decision.
+No PASS/FAIL latency SLA is invented in A6 V1.
 
 ## 13. Result record
 
-For each newly executed scenario record:
+For newly executed provider-dependent evidence record:
 
 ```text
-Scenario ID
 Date/time
 A6 branch/head SHA
-Provider baseline classification where applicable
-Device direction
-Network type
-Screen/background state
-Run count
-PASS / FAIL / NOT_RUN / NOT_AVAILABLE / UNVERIFIABLE
-Observed clipping or dropped token
-Latency samples if applicable
+Provider baseline classification
+Available phone path
+Observed result
+Latency samples if measured
 Concise sanitized notes
 ```
 
-For carried historical observations, record `HISTORICAL_PHYSICAL_EVIDENCE` and its limitations instead of inventing missing metadata.
+For carried historical observations, use `HISTORICAL_PHYSICAL_EVIDENCE` and preserve their limitations instead of inventing missing metadata.
 
 Do not commit secrets, raw provider responses, real identities or protected audio.
 
 ## 14. A6 completion rules
 
-A6 is not complete merely because basic Zello connectivity was already demonstrated.
+A6 must preserve two distinct conclusions:
 
-Required for final audit:
+```text
+F400/ZELLO PHYSICAL AUDIT
+→ historical overall PASS
+→ granular metrics partially unavailable
 
-- historical Zello/F400 basic-connectivity evidence explicitly separated from new A6 exact-run evidence;
-- ZEL-03/ZEL-04 executed if those background/screen-off states were not previously evidenced with sufficient detail, otherwise the prior evidence must be described precisely;
-- controlled first/last-token clipping and repeated-transmission scenarios executed;
-- F400 speaker/microphone intelligibility measured under the A6 phrase set;
-- A6-C robustness evidence recorded;
-- A6-A executed if an existing direct phone path is available, otherwise explicitly `NOT_AVAILABLE`;
-- current provider baseline tied to provider-dependent tests;
-- transport/device conclusions separated from provider-semantic conclusions;
-- no unauthorized configuration/integration changes;
-- complete diff reviewed;
-- exact head/status evidence recorded;
+PHONE/AI CONTROL PROVIDER-DEPENDENT PATH
+→ separate evidence surface
+→ gated by current A5 GET-only provider baseline
+```
+
+A6 is ready for final audit when:
+
+- the historical F400/Zello audit is accurately recorded without fabricated per-run detail;
+- granular gaps are explicitly `UNVERIFIABLE` rather than silently upgraded to PASS;
+- A6-A is executed if an existing isolated phone path is already available, otherwise recorded as `NOT_AVAILABLE`;
+- any provider-dependent evidence is tied to a current GET-only provider baseline;
+- no unauthorized configuration/integration change occurs;
+- complete diff and exact-head evidence are reviewed;
 - PR remains Draft until Albert authorizes Ready.
 
 ## 15. Current stop point
@@ -411,13 +358,14 @@ Required for final audit:
 ```text
 A6: ACTIVE
 ISSUE: #18
-BASIC_ZELLO_F400_CONNECTIVITY: HISTORICAL_PHYSICAL_EVIDENCE
-ZEL-01/ZEL-02_REPEAT: NOT_REQUIRED
-NEW_EXACT_RUN_AUDIO_EVIDENCE: NOT_STARTED
+F400_ZELLO_PHYSICAL_AUDIT: HISTORICAL_PASS
+F400_ZELLO_REPEAT_AUDIT: NOT_REQUIRED
+GRANULAR_HISTORICAL_METRICS: PARTIALLY_UNVERIFIABLE
+A6_A_PHONE_AI_PATH: PENDING_AVAILABILITY_CHECK
 PROVIDER_WRITE: NOT_AUTHORIZED
 A7: NOT_AUTHORIZED
 ```
 
-Next action: execute only the A6 measurements not already established by prior physical testing, beginning with the missing F400 background/screen-off behavior or clipping/reliability evidence as applicable.
+Next action: determine only whether the already-existing isolated direct phone/AI Control path is available; if yes, rerun the A5 GET-only baseline before that provider-dependent test. Do not repeat the completed F400/Zello physical audit.
 
 No canonical-state update required.
