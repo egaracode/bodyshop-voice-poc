@@ -5,7 +5,7 @@
 ```text
 ISSUE: #18
 BLOCK: A6
-STATUS: ACTIVE / EVIDENCE_RECONCILIATION
+STATUS: ACTIVE / EVIDENCE_COMPLETE_WITH_RETAINED_LIMITATIONS
 BASE_MAIN: 7f6150b69f007aeea0e38cd5159eb2e244ff3e32
 PROVIDER_WRITES: FORBIDDEN
 PRODUCTION: FORBIDDEN
@@ -133,7 +133,13 @@ A6 initial synchronized head: 38058ec5da1efd6cbf8afc958a26e388bbfade8f
 working tree: clean
 ```
 
-Later documentation commits move the A6 head and therefore require fresh exact-head repository validation before Ready.
+The targeted physical measurements were later executed while the local A6 branch was synchronized to:
+
+```text
+5705ee53adad83561b6517baf51ca7efc0841675
+```
+
+Later result-documentation commits necessarily move the branch head. The physical observations remain tied to the exact pre-result-recording head above.
 
 ## 9. Canonical historical F400/Zello evidence
 
@@ -167,7 +173,7 @@ A6 does not repeat those already versioned smoke-test capabilities merely to rec
 
 ## 10. Canonical historical gaps
 
-The same merged smoke-test report explicitly lists these as pending before broader use:
+The same merged smoke-test report explicitly listed these as pending before broader use:
 
 ```text
 behavior in real or simulated noisy environment
@@ -177,27 +183,25 @@ Android/Zello update-policy confirmation
 permissions review
 ```
 
-It also lists future possible steps including noise testing and prolonged-session testing.
+Albert later authorized targeted A6 measurements only for the first three physical evidence gaps. Update-policy and permissions review were not added to the A6 physical-measurement objective.
 
-Therefore the current canonical classification is:
+Historical classification before the targeted measurements was:
 
-| Surface | Status | Reason |
+| Surface | Historical status | Reason |
 |---|---|---|
 | basic phone↔F400 Zello audio | HISTORICAL_PHYSICAL_EVIDENCE | merged smoke test PASS |
 | F400 physical PTT | HISTORICAL_PHYSICAL_EVIDENCE | merged smoke test PASS |
 | Zello background behavior | HISTORICAL_PHYSICAL_EVIDENCE | merged smoke test PASS |
 | screen-off behavior | HISTORICAL_PHYSICAL_EVIDENCE | merged smoke test PASS |
-| noise robustness | UNVERIFIABLE | merged smoke test explicitly left it pending |
-| objective latency | UNVERIFIABLE | merged smoke test explicitly left it pending |
-| prolonged-session stability | UNVERIFIABLE | merged smoke test explicitly left it pending |
+| noise robustness | UNVERIFIABLE | merged smoke test left it pending |
+| objective latency | UNVERIFIABLE | merged smoke test left it pending |
+| prolonged-session stability | UNVERIFIABLE | merged smoke test left it pending |
 | exact first/last-token clipping score | UNVERIFIABLE | no retained canonical measurement |
 | competing-speech / overlap behavior | UNVERIFIABLE | no retained canonical measurement |
 
-Chat/memory indicating that broader physical checks may later have been performed is supporting context only because no stronger versioned evidence was found in the repository.
-
 ## 11. A6-A — direct phone / AI Control path
 
-Repository tree inspection at A6 head found documentation, the A5 read-only provider harness/tests and expected provider JSON, but no telephony/SIP/Twilio/phone integration implementation.
+Repository tree inspection found documentation, the A5 read-only provider harness/tests and expected provider JSON, but no telephony/SIP/Twilio/phone integration implementation.
 
 Repository search for telephony/SIP/Twilio/phone-integration code also returned no implementation evidence.
 
@@ -205,59 +209,98 @@ Therefore, under the current A6 rule that no new telephony may be provisioned:
 
 ```text
 A6-A_DIRECT_PHONE_AI_PATH: NOT_AVAILABLE
+FULL_AI_CONTROL_TO_F400_PATH: NOT_AVAILABLE
 ```
 
 This does not say a future direct-phone integration is impossible. It says it does not currently exist as an isolated executable path in this repository and A6 is not authorized to create it.
 
-## 12. A6 evidence conclusion
+## 12. Targeted measurement results
+
+Detailed results are versioned in:
+
+`docs/A6_TARGETED_MEASUREMENT_RESULTS_V1.md`
+
+Observed results:
+
+```text
+A6-NOISE-01: PASS
+F400 → phone: 5/5 PASS
+phone → F400: 5/5 PASS
+TOTAL: 10/10 PASS
+
+A6-LATENCY-01:
+approximate bidirectional Zello latency: < 0.5 s
+LATENCY_APPROXIMATE_OBSERVATION: PASS
+OBJECTIVE_LATENCY_DISTRIBUTION: UNVERIFIABLE
+
+A6-LONG-01: PASS
+duration: 30 minutes
+start: PASS
+~10 min: PASS
+~20 min: PASS
+~30 min: PASS
+PROLONGED_SESSION_STABILITY: PASS
+BATTERY_DELTA: NOT_RETAINED
+```
+
+No product latency SLA is inferred. Exact battery percentages were not supplied and are not reconstructed.
+
+## 13. A6 evidence conclusion
 
 Current defensible result:
 
 ```text
 F400_ZELLO_BASIC_SMOKE_TEST: PASS
+PHYSICAL_PTT: PASS
 BACKGROUND_OPERATION: PASS
 SCREEN_OFF_OPERATION: PASS
-NOISE_ROBUSTNESS: UNVERIFIABLE
-OBJECTIVE_LATENCY: UNVERIFIABLE
-PROLONGED_SESSION_STABILITY: UNVERIFIABLE
+NOISE_ROBUSTNESS: PASS
+LATENCY_APPROXIMATE_OBSERVATION: PASS
+OBSERVED_LATENCY: approximately < 0.5 s bidirectionally
+OBJECTIVE_LATENCY_DISTRIBUTION: UNVERIFIABLE
+PROLONGED_SESSION_STABILITY: PASS
+BATTERY_DELTA: NOT_RETAINED
 DIRECT_PHONE_AI_PATH: NOT_AVAILABLE
 FULL_AI_CONTROL_TO_F400_PATH: NOT_AVAILABLE
 ```
 
-This is not converted into a broader A6 PASS by weakening acceptance criteria.
+A6 retains the exact-latency limitation instead of weakening the evidence model.
 
-## 13. A6 completion decision boundary
+## 14. Completion boundary
 
-A6 currently has two honest closure options, both requiring Albert's later decision:
+Albert authorized the targeted-measurement path after the historical evidence contradiction was identified.
+
+The three authorized physical gaps were handled as:
 
 ```text
-Option A
-close A6 as PARTIAL / EVIDENCE_GAPS
-without repeating tests
-
-Option B
-authorize targeted new measurements only for the canonical gaps
-(noise, objective latency, prolonged-session stability, and any specifically required clipping/overlap metric)
+noise → executed → PASS
+latency → executed observationally → approximate < 0.5 s; exact distribution UNVERIFIABLE
+prolonged session → executed → PASS
 ```
 
-A6 must not claim exact measurements that are absent from canonical evidence.
+Under Issue #18 acceptance, the A6 evidence package is complete with the exact-latency limitation explicitly retained.
 
-## 14. Current stop point
+No ElevenLabs write, Publish, provider branch/version/deployment mutation, telephony provisioning, Zello API automation, Supabase, `AI-Control-Workshop`, production/corporate-network or A7 work occurred.
+
+## 15. Current stop point
 
 ```text
-A6: ACTIVE / STOP_ON_EVIDENCE_CONTRADICTION
+A6: EVIDENCE_COMPLETE_WITH_RETAINED_LIMITATIONS
 ISSUE: #18
-F400_ZELLO_SMOKE_TEST: HISTORICAL_PASS
-BACKGROUND: HISTORICAL_PASS
-SCREEN_OFF: HISTORICAL_PASS
-NOISE: UNVERIFIABLE
-LATENCY: UNVERIFIABLE
-PROLONGED_SESSION: UNVERIFIABLE
+F400_ZELLO_SMOKE_TEST: PASS
+BACKGROUND: PASS
+SCREEN_OFF: PASS
+NOISE: PASS
+APPROX_LATENCY: PASS / observed < 0.5 s bidirectionally
+OBJECTIVE_LATENCY_DISTRIBUTION: UNVERIFIABLE
+PROLONGED_SESSION: PASS
 DIRECT_PHONE_AI_PATH: NOT_AVAILABLE
 PROVIDER_WRITE: NOT_AUTHORIZED
 A7: NOT_AUTHORIZED
+READY: PENDING_FINAL_AUDIT_AND_ALBERT
+MERGE: NOT_AUTHORIZED
 ```
 
-STOP before either redefining acceptance or executing targeted replacement measurements.
+STOP in Draft pending final audit and Albert's explicit Ready decision.
 
 No canonical-state update required.
