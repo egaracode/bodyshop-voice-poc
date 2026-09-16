@@ -50,7 +50,8 @@ src/ai/routingShadow.ts
 Additional product evidence reviewed:
 
 - user-supplied internal maintenance-workflow evidence, reviewed read-only and not committed;
-- current first-party SAP Maintenance Management documentation on hierarchical technical objects, functional locations and equipment;
+- SAP Help Portal, `Technical Objects (CS-BD/PM-EQM)`, current S/4HANA Maintenance Management documentation, https://help.sap.com/docs/SAP_S4HANA_ON-PREMISE/e98c7c41bbe8439e90daa5c114a7573b/59bdb853dcfcb44ce10000000a174cb4.html ;
+- SAP Help Portal, `Equipment (CS-BD/PM-EQM-FL)`, current S/4HANA Maintenance Management documentation, https://help.sap.com/docs/SAP_S4HANA_ON-PREMISE/e72f747389b340229f7fa343975bfa57/a4c6b853dcfcb44ce10000000a174cb4.html ;
 - current first-party Zello and ElevenLabs documentation listed below.
 
 The recorded SHAs are historical provenance for this decision. Future implementation must revalidate live `main` and current owners.
@@ -570,6 +571,11 @@ Consulted: 2026-09-16.
 ### SAP Maintenance Management — Technical Objects / Equipment
 
 Publisher: SAP Help Portal
+
+References:
+
+- https://help.sap.com/docs/SAP_S4HANA_ON-PREMISE/e98c7c41bbe8439e90daa5c114a7573b/59bdb853dcfcb44ce10000000a174cb4.html
+- https://help.sap.com/docs/SAP_S4HANA_ON-PREMISE/e72f747389b340229f7fa343975bfa57/a4c6b853dcfcb44ce10000000a174cb4.html
 
 Engineering consequence:
 
