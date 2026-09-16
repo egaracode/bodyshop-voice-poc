@@ -1,93 +1,112 @@
 # A7 — BODYSHOP Voice Shadow Integration Decision V1
 
-> Status: ARCHITECTURE DECISION / SHADOW-ONLY / NO RUNTIME INTEGRATION
+> Status: VOICE-LAB INTEGRATION DECISION / SHADOW-ONLY / NO RUNTIME INTEGRATION
 
-## 1. Purpose
+## 1. Purpose and authority
 
-Define the minimum future integration boundary between the isolated `bodyshop-voice-poc` laboratory and canonical BODYSHOP PRO without creating a second breakdown system, duplicating BODYSHOP domain rules or granting Voice authority over lifecycle state.
+Define the minimum boundary that `bodyshop-voice-poc` must respect in any future connection to canonical BODYSHOP PRO.
 
-A7 is a decision block only. It does not implement provider calls, telephony, Zello automation, BODYSHOP code, Supabase or production integration.
+This document is authoritative only for the Voice PoC side. It does **not** create or modify a canonical BODYSHOP architecture decision. Any future change in `egaracode/AI-Control-Workshop` requires that repository's own bootstrap, Issue, authorization, branch, tests, CI and Albert decision.
 
-## 2. Source and authority hierarchy
+Canonical BODYSHOP domain and lifecycle authority remains in `egaracode/AI-Control-Workshop`.
 
-This decision was evaluated against, in order:
+A7 implements nothing. No provider, telephony, Zello, BODYSHOP, Supabase or Production runtime is changed.
 
-1. live GitHub state of `egaracode/bodyshop-voice-poc`;
-2. live GitHub state and current `main` code/contracts of `egaracode/AI-Control-Workshop`;
-3. active BODYSHOP canonical owner documents;
-4. current first-party Zello and ElevenLabs documentation;
-5. Relevo only as non-authoritative design inspiration.
+## 2. Current source basis
 
-BODYSHOP domain and lifecycle authority remain in `egaracode/AI-Control-Workshop`.
+Consulted on 2026-09-16.
 
-The Voice PoC owns only voice/channel/provider experimentation and communication semantics.
+Voice repository at decision time:
+
+```text
+egaracode/bodyshop-voice-poc
+main = 30283d29686695e939748e6a71d7442f6f837055
+```
+
+Canonical BODYSHOP repository at decision time:
+
+```text
+egaracode/AI-Control-Workshop
+main = cae706403d4ffc03fb7118205d355508c3850db4
+```
+
+BODYSHOP evidence reviewed:
+
+```text
+.ai/00_AGENT_INDEX.md
+.ai/00_EXECUTION_DISCIPLINE.md
+.ai/01_PROJECT_CONTEXT.md
+.ai/CURRENT_STATE.md
+docs/00_PROJECT_CANONICAL_STATE.md
+docs/ARCHITECTURE/CANONICAL_DECISION_INDEX.md
+docs/DATA_CONTRACTS/BREAKDOWN_LIFECYCLE_ACTOR_MATRIX_V1.md
+src/ai/routingContract.ts
+src/ai/routingShadow.ts
+src/types.ts
+```
+
+The recorded SHAs are historical provenance for this decision. Future implementation must revalidate live `main` and current owners.
 
 ## 3. Historical-plan contradiction
 
-A previously supplied planning note described:
+A supplied earlier analysis still described A5 as active and A6 as planned.
+
+Live GitHub supersedes that history:
 
 ```text
-A5 active
-A6 future
-A7 gated
+A5 = MERGED / provider-control Phase 1 complete / provider result DRIFT
+A6 = MERGED / evidence complete with retained limitations
+VOICE_COMMUNICATION_WORKFLOW_V1 = MERGED
+A7 = current decision block
 ```
 
-That sequence is historical.
+A7 does not reopen A5 or A6.
 
-At the source basis used for this decision:
+## 4. Minimal integration decision
+
+The Voice PoC boundary is:
 
 ```text
-A5 = merged / provider-control Phase 1 complete / provider result DRIFT
-A6 = merged / voice-audio evidence complete with retained limitations
-VOICE_COMMUNICATION_WORKFLOW_V1 = merged
-A7 = next gated decision block
+phone / ElevenLabs / Zello / simulator
+        ↓
+Voice-side channel/provider adapter
+        ↓
+provider-neutral Voice observation
+        ↓
+BODYSHOP boundary
 ```
 
-Therefore A7 does not reopen A5 or A6 simply because an older plan still describes them as unfinished.
+From that boundary onward, BODYSHOP must retain ownership of validation, catalog/taxonomy resolution, routing, Shadow evaluation and lifecycle semantics.
 
-## 4. Core decision
-
-The integration model is:
+The intended future shape, subject to separate acceptance inside canonical BODYSHOP, is:
 
 ```text
-VOICE CHANNEL / PROVIDER
-        ↓
-voice-side observation capture
-        ↓
-provider/channel-neutral observation
+Voice observation
         ↓
 BODYSHOP-side validation + domain normalization
         ↓
 existing BODYSHOP Blind Shadow
         ↓
 AI candidate evidence
-        versus
+        vs
 human decision
         ↓
 evaluation
 ```
 
-Explicitly rejected:
+Explicitly rejected on the Voice side:
 
 ```text
-Voice PoC
-→ direct Supabase RPC
-→ authoritative breakdown mutation
+Voice → direct Supabase/RPC lifecycle mutation
+Voice → second breakdown database
+Voice → parallel lifecycle
+Voice → authoritative technician assignment
+Voice → authoritative pre-close/final-close
 ```
 
-Also rejected:
+## 5. First integration should be intake-only
 
-```text
-Voice PoC
-→ second breakdown database
-→ parallel lifecycle
-```
-
-BODYSHOP remains the only owner of breakdown lifecycle, routing taxonomy, technician eligibility, assignment, pre-close and final close.
-
-## 5. Why the first integration is intake-only
-
-The smallest useful integration is the confirmed operator intake already defined in `VOICE_COMMUNICATION_WORKFLOW_V1`:
+The smallest useful future handoff is the already approved operator intake:
 
 ```text
 operator phone call
@@ -98,28 +117,29 @@ operator phone call
 → faulty element/device
 → problem description
 → line stopped yes/no
-→ full read-back
+→ complete read-back
 → operator confirms
 ```
 
-Only after that confirmation may a future Voice integration emit an intake observation.
+Only after operator confirmation may Voice emit a confirmed-intake observation.
 
-The first integration does **not** include:
+The first implementation candidate must not include:
 
-- real technician assignment;
-- Zello transmit;
-- technician arrival state;
-- real pre-close;
-- final close;
-- production restoration;
-- support/transfer;
-- direct Cloud persistence.
+```text
+real technician assignment
+Zello transmit
+delivery acknowledgement
+technician arrival/intervention state
+real pre-close
+final close
+production restoration
+support/transfer
+Cloud persistence
+```
 
-This keeps the first implementation aligned with the existing BODYSHOP routing Shadow capability rather than trying to integrate the whole operational lifecycle at once.
+## 6. BODYSHOP capability available for reuse
 
-## 6. BODYSHOP capability to reuse
-
-Current BODYSHOP `AI_ROUTING_CONTRACT_V1` already defines the provider-independent routing input:
+Current BODYSHOP `AI_ROUTING_CONTRACT_V1` already owns this routing input:
 
 ```text
 description
@@ -131,7 +151,7 @@ element_type
 line_stopped
 ```
 
-Current `AI_ROUTING_SHADOW_V1` already provides:
+Current `AI_ROUTING_SHADOW_V1` already owns:
 
 ```text
 input snapshot
@@ -149,24 +169,20 @@ SHADOW_INVALID_INPUT
 DRY_RUN_NOT_EXECUTED
 ```
 
-A7 therefore decides:
+Therefore Voice must not build its own competing routing evaluator, fingerprint model, human-comparison lifecycle or breakdown store.
 
-> do not build a second Voice-specific routing evaluator, fingerprint system, human-comparison store or lifecycle engine.
+Whether and how canonical BODYSHOP exposes an adapter to these existing capabilities is a later BODYSHOP-owned decision.
 
-The future integration must adapt Voice evidence into the existing BODYSHOP Shadow boundary.
+## 7. Minimal provider-neutral Voice observation
 
-## 7. Minimum Voice observation boundary
-
-A7 defines a conceptual provider/channel-neutral observation. It is intentionally not a shared package or new runtime dependency.
-
-Minimum information needed for future integration:
+A7 defines a conceptual transport object, not a shared package or dependency:
 
 ```text
 observation_id
-source_channel          phone | zello | simulator
-source_reference        provider/channel message reference when available
-speaker_role            operator | technician | control | unknown
-sender_reference        provider/network identity reference when available
+source_channel           phone | zello | simulator
+source_reference         provider/channel reference when available
+speaker_role             operator | technician | control | unknown
+sender_reference         network/provider identity when available
 occurred_at
 recorded_at
 transcript
@@ -176,13 +192,13 @@ candidate_intent
 confirmed_breakdown      | null
 ```
 
-For the first implementation, the only candidate intent required is:
+For the first integration candidate, only this intent is required:
 
 ```text
 BREAKDOWN_INTAKE_CONFIRMED
 ```
 
-and `confirmed_breakdown` contains only:
+and `confirmed_breakdown` contains:
 
 ```text
 platform
@@ -193,135 +209,98 @@ description
 line_stopped
 ```
 
-No BODYSHOP maintenance area, specialty or selected technician is supplied by Voice.
+Voice does **not** provide BODYSHOP maintenance area, specialty, selected technician or canonical `element_type`.
 
-Those values would leak downstream decisions into the Shadow input and remain BODYSHOP-owned.
+## 8. Catalog and element-type ownership
 
-## 8. Operator identity boundary
+Voice captures the element/device exactly as understood and confirmed with the operator.
 
-The conversational workflow asks the operator for name and surname because this is part of the user interaction and BODYSHOP registration context.
-
-However the existing routing Shadow input does not require operator identity.
-
-Therefore the first routing integration must not add worker identity to `AiRoutingInputV1` merely because Voice captured it.
-
-Public/versioned Voice artifacts continue to use dummy identities only.
-
-Any future private operational persistence of real worker identity requires its own authorized BODYSHOP data/privacy boundary.
-
-## 9. Canonical element type stays in BODYSHOP
-
-Voice captures the faulty element/device as spoken and confirmed by the operator.
-
-Voice does not own BODYSHOP `CatalogElementType` classification.
-
-Current BODYSHOP catalog elements already carry canonical `element_type` metadata.
-
-Therefore the future BODYSHOP-side adapter must:
+BODYSHOP currently owns canonical `CatalogElementType` and catalog metadata. A future BODYSHOP-side adapter should therefore resolve:
 
 ```text
-confirmed platform / installation / operation / element
-→ resolve against canonical BODYSHOP catalog
-→ obtain canonical element_type
-→ construct AiRoutingInputV1
+platform + installation + operation + confirmed element
+→ canonical catalog element
+→ canonical element_type
+→ AiRoutingInputV1
 ```
 
 If the element cannot be resolved unambiguously:
 
 ```text
 DO NOT GUESS element_type
-DO NOT RUN routing Shadow as if complete
-RETURN / RECORD incomplete mapping evidence
+DO NOT EVALUATE AS COMPLETE ROUTING INPUT
 ```
 
-This preserves BODYSHOP taxonomy ownership and prevents Voice from creating a competing catalog.
+This prevents Voice from creating a competing workshop taxonomy.
 
-## 10. Timing and evidence provenance
+## 9. Identity and timing boundary
 
-BODYSHOP canonical lifecycle distinguishes:
+The Voice workflow asks the operator for name and surname, but current BODYSHOP routing Shadow does not require operator identity.
+
+Do not add worker identity to `AiRoutingInputV1` merely because Voice captured it. Public/versioned Voice evidence continues to use dummy identities only.
+
+BODYSHOP canonical lifecycle also distinguishes event occurrence from system recording, including telephone/delayed reports. The conceptual observation therefore preserves:
 
 ```text
 occurred_at
 recorded_at
-reported_by
-recorded_by
-evidence_source
-evidence_confidence
 ```
 
-Telephone and delayed reports must preserve the difference between when an event occurred and when it was recorded.
+Any future private persistence of real worker identity or additional evidence fields requires a separately authorized BODYSHOP data/privacy boundary.
 
-A future Voice observation therefore keeps both `occurred_at` and `recorded_at` available rather than collapsing them into one timestamp.
+## 10. Transcript confidence is not decision confidence
 
-Voice/provider confidence and BODYSHOP evidence confidence must not be silently treated as the same measurement.
+Zello's official Channel API documents optional transcription events containing transcription confidence.
 
-## 11. Transcript confidence is not decision confidence
-
-Current Zello Channel API documentation can expose transcription confidence with `on_transcription`.
-
-That value means confidence in the transcription result.
-
-It must not be interpreted as:
+That value is evidence about transcription accuracy. It is **not**:
 
 ```text
-probability that the routing is correct
-probability that a pre-close should occur
-probability that a lifecycle action is safe
+routing confidence
+pre-close confidence
+safety confidence
+permission to mutate BODYSHOP
 ```
 
-The separation is:
+Keep the layers separate:
 
 ```text
-channel/STT confidence
-→ quality of transcript evidence
+STT/channel confidence
+→ transcript quality
 
-BODYSHOP routing result
-→ deterministic rule / recommend / abstain / invalid / error
+BODYSHOP routing
+→ deterministic / recommend / abstain / invalid / error
 
 human decision
-→ authoritative comparison target in Shadow
+→ authoritative Shadow comparison target
 ```
 
-A high transcription confidence never authorizes a BODYSHOP action.
+## 11. ElevenLabs position
 
-## 12. ElevenLabs integration position
+ElevenLabs official documentation supports two relevant future mechanisms:
 
-### 12.1 Post-call webhooks
+### Post-call transcription webhooks
 
-ElevenLabs documents post-call transcription webhooks that contain conversation/transcript metadata after the call and analysis are complete, with HMAC authentication support.
+They arrive after the call has ended and analysis is complete, can contain transcript/conversation metadata and support HMAC signature validation.
 
-A7 classifies them as useful for:
+Use case for BODYSHOP Voice:
 
 ```text
-post-call audit evidence
-conversation trace
+post-call audit/evidence
 provider/version correlation
 later evaluation
 ```
 
-They are not sufficient as the only mechanism for an action that must occur during a live call because they arrive after call completion/analysis.
+They must not be treated as the sole mechanism for a fact that needs to be handed off during a live call.
 
-### 12.2 Webhook tools
+### Webhook tools
 
-ElevenLabs documents webhook tools for calling external APIs during a conversation.
+ElevenLabs agents can call external APIs during a conversation.
 
-If a future block uses this capability, the target must be a bounded Voice/Shadow adapter endpoint.
+If used later, the destination should be a bounded Voice/Shadow endpoint. Voice must not expose authoritative BODYSHOP lifecycle mutation endpoints directly to the provider.
 
-It must not directly call:
+## 12. Zello position
 
-```text
-BODYSHOP lifecycle mutation RPC
-Supabase privileged endpoint
-pre-close endpoint
-final-close endpoint
-technician-assignment endpoint
-```
-
-This keeps the provider replaceable and BODYSHOP authoritative.
-
-## 13. Zello integration position
-
-Current official Zello Channel API documentation supports channel voice send/receive and, where the network supports it and `features.transcriptions = true`, `on_transcription` events containing:
+The official Zello Channel API documents `features.transcriptions = true` and `on_transcription` events, when supported by the network, including:
 
 ```text
 stream_id
@@ -331,15 +310,11 @@ confidence
 language
 ```
 
-This makes native Zello transcription a reasonable future first option before adding another STT provider.
+Therefore native Zello transcription is a reasonable **future test candidate** before adding another STT provider.
 
-A7 does not claim its workshop accuracy is adequate. Accuracy for noise, accents and workshop vocabulary must be measured with BODYSHOP dummy language before adoption.
+This document does not claim it is accurate enough for workshop noise, accents or vocabulary. That must be measured with dummy BODYSHOP language before adoption.
 
-If inadequate, another STT provider may later sit behind the same observation boundary without changing BODYSHOP semantics.
-
-## 14. Zello human-priority constraint
-
-Current Zello Work documentation defines talk priority:
+Zello Work also documents talk priorities:
 
 ```text
 High   → interrupts Normal and Low
@@ -347,295 +322,215 @@ Normal → interrupts Low
 Low    → cannot interrupt
 ```
 
-If a later laboratory block uses Zello Work transmit, a reasonable test configuration is:
+A future lab may test AI at Low priority and humans above it, but this is a hypothesis for physical validation, not a Production policy and not an A7 implementation task.
+
+## 13. Relevo lessons used only as design inspiration
+
+Reviewed repository:
 
 ```text
-AI Control      LOW
-technician      NORMAL
-human Control   HIGH, where the laboratory role model supports it
+https://github.com/Axerra1/relevo
 ```
 
-This is a test hypothesis, not a production policy.
+Useful ideas:
 
-It must be physically validated because provider documentation describes configured priority behavior but does not prove the exact future BODYSHOP channel/runtime configuration.
+- channel-adapter boundary;
+- transcript separated from semantic interpretation;
+- humans retain PTT priority;
+- trace source utterance → interpretation → output → human response;
+- use network sender identity instead of voice biometrics when the channel already provides identity.
 
-A7 itself performs no Zello configuration or transmission.
-
-## 15. Relevo lessons adopted conceptually
-
-Relevo provides useful design inspiration for:
-
-- a channel-adapter boundary;
-- separating transcript from semantic interpretation;
-- keeping humans dominant on a PTT channel;
-- traceability from source utterance to interpretation and emitted communication;
-- not inferring speaker identity from voice biometrics when the channel already exposes sender identity.
-
-These ideas are not imported as code.
-
-At the time of review, the Relevo repository root did not show a visible `LICENSE` file.
-
-Therefore:
+The reviewed repository root showed no visible `LICENSE` file. Therefore:
 
 ```text
 NO CODE COPY
-NO TEXTUAL IMPLEMENTATION COPY
+NO IMPLEMENTATION-TEXT COPY
 CONCEPTUAL INSPIRATION ONLY
 ```
 
-Any adopted behavior must independently satisfy BODYSHOP contracts and current official provider documentation.
+Every adopted concept must still be independently supported by BODYSHOP contracts and/or official provider documentation.
 
-## 16. Traceability model
+## 14. Traceability target
 
-Future evidence should be able to answer:
-
-```text
-who/source spoke?
-what transcript was produced?
-what was operator-confirmed?
-what BODYSHOP mapping was possible?
-what input fingerprint was evaluated?
-what candidate routing resulted?
-what human decision was later attached?
-where did they agree/disagree?
-```
-
-The minimum trace chain is:
+A future integration should be able to correlate:
 
 ```text
-voice observation id
+Voice observation id
 → source/provider reference
 → transcript
 → confirmed intake
 → BODYSHOP Shadow input fingerprint
 → candidate routing evidence
-→ human decision
+→ later human decision
 → comparison
 ```
 
-Do not add a second permanent event store in Voice merely to duplicate BODYSHOP evidence.
+Voice must not create a second permanent event store merely to duplicate BODYSHOP evidence.
 
-## 17. Technician resolution messages
+## 15. Technician-resolution voice is later scope
 
-The merged Voice communication contract defines technician phrases such as:
+The merged Voice communication contract recognizes phrases such as:
 
 ```text
 "Avería solucionada"
 "Puedes cerrar la avería"
-"La avería está solucionada"
 ```
 
-These remain semantically useful as a future:
+They may later map to a non-authoritative candidate intent such as:
 
 ```text
 REQUEST_PRE_CLOSE_CANDIDATE
 ```
 
-But A7 decides that they are **not part of the first integration implementation**.
+They are deliberately **not** part of the first integration candidate.
 
-Reason: BODYSHOP lifecycle authority for normal pre-close is already explicit and safety-sensitive:
+Current canonical BODYSHOP requires the current owner Technician to report physical resolution and active Control/Admin to perform normal pre-close; final technical close remains a later Technician action. A future voice path must preserve identity, current ownership, lifecycle state, timing, equipment-condition evidence and actor authority.
 
-```text
-current owner technician reports physical resolution
-→ active Control/Admin may record pre-close
-→ technician later documents solution and performs final close
-```
+## 16. Provider DRIFT and missing transports
 
-A future technician-voice integration must preserve actor authentication/identity, ownership, lifecycle state, timing, equipment-condition evidence and Control/Admin authority. It requires its own bounded block.
-
-## 18. Provider DRIFT classification
-
-A5 demonstrated that the effective ElevenLabs sandbox configuration differs from the GitHub-owned expected configuration.
-
-A7 classifies this as follows:
+A5 provider result remains:
 
 ```text
-A7 architecture decision                     NOT BLOCKED
-provider-neutral adapter contract/tests       NOT BLOCKED
-claim of aligned ElevenLabs behavior          BLOCKED BY DRIFT
-real ElevenLabs end-to-end acceptance         REQUIRES drift resolution or an explicit new expected-state decision
+DRIFT
 ```
 
-The drift is real evidence and must not be ignored.
+Classification:
 
-It also must not be turned into an artificial blocker for provider-independent architecture work.
+```text
+A7 Voice-side architecture decision              NOT BLOCKED
+provider-neutral contract/test work              NOT BLOCKED
+claim of aligned ElevenLabs behavior             BLOCKED BY DRIFT
+real ElevenLabs end-to-end acceptance            requires drift resolution or explicit new expected-state decision
+```
 
-## 19. Missing real transport paths
-
-A6 established:
+A6 also established:
 
 ```text
 DIRECT_PHONE_AI_PATH: NOT_AVAILABLE
 FULL_AI_CONTROL_TO_F400_PATH: NOT_AVAILABLE
 ```
 
-A7 classifies these as:
+Classification:
 
 ```text
-architecture decision                         NOT BLOCKED
-pure BODYSHOP-side Shadow adapter             NOT BLOCKED
-real phone → BODYSHOP runtime proof            BLOCKED until transport exists
-full phone → AI → Zello/F400 visible E2E       BLOCKED until both transport directions exist
+architecture/contract decision                   NOT BLOCKED
+pure provider-neutral adapter work               NOT BLOCKED
+real phone → BODYSHOP runtime proof               blocked until transport exists
+full phone → AI → Zello/F400 visible proof        blocked until required transports exist
 ```
 
-Do not claim an end-to-end product path before those transports exist and are tested.
+These are real limitations, but they are not reasons to add transport complexity before the provider-neutral boundary is proven.
 
-## 20. Single next implementation goal
+## 17. Next implementation candidate
 
-A7 selects exactly one next implementation goal:
+A7 identifies one candidate only:
 
 # BODYSHOP Voice Shadow Intake Adapter V1
 
-Repository owner:
+Candidate repository:
 
 ```text
 egaracode/AI-Control-Workshop
 ```
 
-Reason: BODYSHOP owns the routing contract, canonical element taxonomy and Blind Shadow implementation.
-
-The next goal should implement and test a **pure provider-neutral inbound adapter** that accepts one confirmed Voice intake fixture/observation and:
+Proposed responsibility:
 
 ```text
-validate required fields
-→ resolve canonical BODYSHOP element/catalog type
+confirmed Voice intake fixture/observation
+→ validate fields
+→ resolve canonical BODYSHOP element/type
 → construct AiRoutingInputV1
-→ capture existing RoutingShadow input/fingerprint
+→ use existing RoutingShadow capture/fingerprint
 → return Shadow-ready evidence
 ```
 
-It must not:
+Prohibited in that candidate unless a future BODYSHOP Issue explicitly says otherwise:
 
 ```text
-call ElevenLabs
-call Zello
-call Supabase
-create a real breakdown
-assign a real technician
+ElevenLabs calls
+Zello calls
+Supabase calls
+real breakdown creation
+real technician assignment
 pre-close
 final-close
-write Production
+Production mutation
 ```
 
-This is the shortest path that proves the cross-domain contract without introducing external runtime complexity.
+This is a **candidate**, not authorization and not a canonical BODYSHOP decision. Before any implementation, `AI-Control-Workshop` must independently revalidate its current `main`, owners, open work and governance and Albert must authorize the BODYSHOP Issue.
 
-## 21. What comes after that goal
+A7 intentionally does not create a nested roadmap beyond this one candidate.
 
-Not authorized by A7, and intentionally not pre-expanded into a nested roadmap.
-
-Later work will be chosen from evidence after the adapter exists.
-
-Potential future domains include:
-
-```text
-real ElevenLabs/phone emitter
-Zello receive adapter
-Zello transmit/delivery/priority validation
-technician resolution observation
-visible dummy end-to-end Shadow evaluation
-```
-
-None is a prerequisite to complete A7 itself.
-
-## 22. Official external sources consulted
+## 18. Official external sources consulted
 
 Consulted: 2026-09-16.
 
 ### Zello Channel API specification
 
-Publisher/owner: Zello official GitHub organization
+Publisher: Zello official GitHub organization
 
 Reference:
 https://github.com/zelloptt/zello-channel-api/blob/main/API.md
 
-Engineering consequence:
+Supports:
 
-- secure WebSocket Channel API;
-- channel stream identifiers/sender metadata;
+- Channel API stream/sender metadata;
 - optional `features.transcriptions`;
-- `on_transcription` with transcript/confidence/language where supported.
+- `on_transcription` with `stream_id`, sender, transcript text, confidence and language when supported.
 
-### Talk priority
+### Zello Work — Talk priority
 
-Publisher: Zello Work
+Publisher: Zello
 
 Reference:
 https://support.zello.com/zw/talk-priority
 
-Engineering consequence:
+Supports:
 
 - High interrupts Normal/Low;
 - Normal interrupts Low;
 - Low cannot interrupt;
-- future human-priority assumptions must be runtime tested.
+- same-priority timeout rules and emergency behavior remain provider-defined.
 
-### Post-call webhooks
+### ElevenLabs — Post-call webhooks
 
 Publisher: ElevenLabs
 
 Reference:
 https://elevenlabs.io/docs/eleven-agents/workflows/post-call-webhooks
 
-Engineering consequence:
+Supports:
 
-- post-call transcription evidence is available after call analysis;
-- payload includes conversation metadata/transcript information;
-- webhook authenticity can be verified using HMAC signatures.
+- post-call transcription data after call analysis;
+- transcript and conversation metadata;
+- HMAC webhook verification.
 
-### Webhook tools
+### ElevenLabs — Webhook tools
 
 Publisher: ElevenLabs
 
 Reference:
 https://elevenlabs.io/docs/eleven-agents/customization/tools/webhook-tools
 
-Engineering consequence:
+Supports:
 
-- an agent can call an external API during a conversation;
-- A7 keeps such calls behind a Voice/Shadow boundary rather than exposing authoritative BODYSHOP mutations directly to the provider.
+- agent calls to external REST APIs during a conversation.
 
-## 23. BODYSHOP primary repository evidence consulted
-
-Source basis at decision time:
-
-```text
-AI-Control-Workshop main:
-cae706403d4ffc03fb7118205d355508c3850db4
-```
-
-Principal files:
-
-```text
-.ai/00_AGENT_INDEX.md
-.ai/00_EXECUTION_DISCIPLINE.md
-.ai/01_PROJECT_CONTEXT.md
-.ai/CURRENT_STATE.md
-docs/00_PROJECT_CANONICAL_STATE.md
-docs/ARCHITECTURE/CANONICAL_DECISION_INDEX.md
-docs/DATA_CONTRACTS/BREAKDOWN_LIFECYCLE_ACTOR_MATRIX_V1.md
-src/ai/routingContract.ts
-src/ai/routingShadow.ts
-src/types.ts
-```
-
-This SHA is recorded as historical decision provenance. Future implementation must revalidate live `main` and current owners before acting.
-
-## 24. Explicit exclusions
+## 19. Explicit exclusions
 
 A7 does not authorize or implement:
 
 ```text
 AI-Control-Workshop modification
 Supabase / SQL / migrations / RLS / RPC / Auth
-BODYSHOP Cloud mutation
+BODYSHOP lifecycle mutation
 real breakdown creation
-real assignment
-real pre-close
-real final close
-ElevenLabs write / Publish / provider mutation
+real technician assignment
+real pre-close or final close
+ElevenLabs write / Publish / configuration mutation
 phone/SIP provisioning
 Zello API runtime integration
-Zello Work role/priority changes
+Zello Work priority/role changes
 F400 software/runtime modification
 Production
 corporate network integration
@@ -644,31 +539,31 @@ new dependencies
 CI/workflow changes
 ```
 
-## 25. Acceptance result
+## 20. Acceptance result
 
-A7 is complete as a decision when the following are true:
+A7 is complete as a Voice-lab decision when:
 
 ```text
-ONE integration boundary defined
-BODYSHOP remains sole domain authority
-NO second breakdown system
-NO direct Voice → Supabase lifecycle mutation
-existing routing Shadow reused
-transcription confidence separated from semantic authority
-provider DRIFT correctly classified
-missing transport paths correctly classified
-one next implementation goal selected
-current official-source basis recorded
+ONE minimal boundary is documented
+BODYSHOP authority is preserved
+NO second breakdown system is introduced
+NO direct Voice → Supabase lifecycle mutation is proposed
+existing BODYSHOP routing Shadow is the reuse target
+transcription confidence is separated from semantic authority
+provider DRIFT is correctly classified
+missing transports are correctly classified
+ONE next implementation candidate is identified
+current official-source basis is recorded
 ```
 
-## 26. Stop point
+## 21. Stop point
 
 ```text
 A7_BODYSHOP_VOICE_INTEGRATION_DECISION_V1: DOCUMENTED
-NEXT_IMPLEMENTATION_GOAL: BODYSHOP Voice Shadow Intake Adapter V1
-NEXT_IMPLEMENTATION: NOT AUTHORIZED BY THIS DOCUMENT
+NEXT_IMPLEMENTATION_CANDIDATE: BODYSHOP Voice Shadow Intake Adapter V1
+NEXT_IMPLEMENTATION: NOT AUTHORIZED
 ```
 
-Albert retains Ready, merge and authorization of the next implementation goal.
+Albert retains Ready, merge and authorization of any future BODYSHOP implementation.
 
 No BODYSHOP canonical-state update required by this documentation-only Voice-lab decision.
