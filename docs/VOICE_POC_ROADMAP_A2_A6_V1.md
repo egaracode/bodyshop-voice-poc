@@ -27,9 +27,9 @@ A5  ChatGPT ↔ ElevenLabs Provider Control Harness
 
 A6  Voice / Audio Validation
     phone + F400 + walkie/Zello
-    ACTIVE / EVIDENCE COMPLETE WITH RETAINED LIMITATIONS
-    Issue #18
-    targeted physical measurements complete
+    MERGED / EVIDENCE_COMPLETE_WITH_RETAINED_LIMITATIONS
+    Issue #18 CLOSED / completed
+    PR #19 MERGED
     provider-dependent expected-config PASS remains gated by A5 DRIFT
 
 A7  Future BODYSHOP Integration Evaluation
@@ -109,18 +109,22 @@ Any future controlled provider write requires a separate authorization path.
 Status:
 
 ```text
-ACTIVE / EVIDENCE_COMPLETE_WITH_RETAINED_LIMITATIONS
+MERGED / EVIDENCE_COMPLETE_WITH_RETAINED_LIMITATIONS
 AUTHORIZED: 2026-09-14
-ISSUE: #18
-BASE_MAIN: 7f6150b69f007aeea0e38cd5159eb2e244ff3e32
+ISSUE: #18 CLOSED / completed
+PR: #19 MERGED
+FINAL_HEAD: 4021f49674e270f408bd15a701992331d7058e06
+MERGE_COMMIT: d4b696ef2d32c8e76171f5e8bb2ecf5838e73674
+PHYSICAL_EXECUTION_ANCHOR: 5705ee53adad83561b6517baf51ca7efc0841675
 TARGETED_MEASUREMENTS: COMPLETE
-PROVIDER_WRITE: NOT_AUTHORIZED
+FINAL_AUDIT: COMPLETE
+PROVIDER_WRITE: NOT_AUTHORIZED / NOT_PERFORMED
 A7: NOT_AUTHORIZED
 ```
 
 A6 owns real audio/channel evidence for the available isolated F400/Zello laboratory path.
 
-Canonical historical smoke-test evidence already establishes PASS for:
+Canonical historical smoke-test evidence establishes PASS for:
 
 ```text
 phone ↔ F400 bidirectional Zello audio
@@ -155,7 +159,7 @@ FULL_AI_CONTROL_TO_F400_PATH: NOT_AVAILABLE
 
 Because A5 ended with provider `DRIFT`, A6 does not claim expected-provider semantic/configuration PASS.
 
-Current A6 package is complete for final audit, with the exact-latency distribution limitation explicitly retained rather than guessed.
+A6 is merged with its exact-latency distribution limitation explicitly retained rather than guessed.
 
 ## 7. A7 — Future BODYSHOP Integration Evaluation
 
@@ -172,7 +176,7 @@ A2 MERGED
 → A3 MERGED
 → A4 CLOSED / SUPERSEDED / NOT_PASS
 → A5 PROVIDER CONTROL HARNESS MERGED / PHASE 1 COMPLETE
-→ A6 REAL VOICE/AUDIO EVIDENCE COMPLETE / FINAL AUDIT PENDING
+→ A6 REAL VOICE/AUDIO MERGED / EVIDENCE_COMPLETE_WITH_RETAINED_LIMITATIONS
 → A7 FUTURE INTEGRATION EVALUATION GATED / NOT AUTHORIZED
 ```
 
@@ -223,19 +227,20 @@ No canonical-state update required.
 ## 11. Current stop model
 
 ```text
-ACTIVE_BLOCK: A6
+ACTIVE_BLOCK: NONE
 A5: MERGED / PHASE_1_COMPLETE / PASS
 A5_PROVIDER_RESULT: DRIFT
-A6_STATUS: EVIDENCE_COMPLETE_WITH_RETAINED_LIMITATIONS
-A6_ISSUE: #18
+A6_STATUS: MERGED / EVIDENCE_COMPLETE_WITH_RETAINED_LIMITATIONS
+A6_ISSUE: #18 CLOSED / completed
+A6_PR: #19 MERGED
+A6_MERGE_COMMIT: d4b696ef2d32c8e76171f5e8bb2ecf5838e73674
 A6_TARGETED_MEASUREMENTS: COMPLETE
 A6_NOISE: PASS
 A6_APPROX_LATENCY: PASS / observed < 0.5 s bidirectionally
 A6_OBJECTIVE_LATENCY_DISTRIBUTION: UNVERIFIABLE
 A6_PROLONGED_SESSION: PASS
 A6_DIRECT_PHONE_AI_PATH: NOT_AVAILABLE
-A6_PROVIDER_WRITE: NOT_AUTHORIZED
-A6_READY: PENDING_FINAL_AUDIT_AND_ALBERT
-FUTURE_GATED_BLOCK: A7
+A6_PROVIDER_WRITE: NOT_AUTHORIZED / NOT_PERFORMED
+NEXT_GATED_BLOCK: A7
 A7_STATUS: NOT_AUTHORIZED
 ```
