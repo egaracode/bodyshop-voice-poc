@@ -129,6 +129,8 @@ Therefore the reference catalog must support a parent-child technical-object lev
 
 The first non-production catalog fixture should use synthetic names only.
 
+For this decision, **10 operations means 10 operation nodes under each installation**, because the reference hierarchy is `installation → operation`.
+
 Target scale:
 
 ```text
@@ -169,6 +171,14 @@ OP220
 OP240
 OP260
 OP280
+```
+
+Internal identifiers must be unique by hierarchy even when the display operation code repeats, for example:
+
+```text
+A01-LATERALES-OP100
+A01-MASCARON-OP100
+A02-LATERALES-OP100
 ```
 
 These are synthetic examples, not real plant master data.
