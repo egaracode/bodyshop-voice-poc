@@ -8,7 +8,7 @@ Define the minimum boundary that `bodyshop-voice-poc` must respect in any future
 
 This document is authoritative only for the Voice PoC side. It does **not** create or modify a canonical BODYSHOP architecture decision. Any future change in `egaracode/AI-Control-Workshop` requires that repository's own bootstrap, Issue, authorization, branch, tests, CI and Albert decision.
 
-Canonical BODYSHOP domain and lifecycle authority remains in `egaracode/AI-Control-Workshop`.
+Canonical BODYSHOP domain, catalog and lifecycle authority remains in `egaracode/AI-Control-Workshop`.
 
 A7 implements nothing. No provider, telephony, Zello, BODYSHOP, Supabase or Production runtime is changed.
 
@@ -40,10 +40,18 @@ BODYSHOP evidence reviewed:
 docs/00_PROJECT_CANONICAL_STATE.md
 docs/ARCHITECTURE/CANONICAL_DECISION_INDEX.md
 docs/DATA_CONTRACTS/BREAKDOWN_LIFECYCLE_ACTOR_MATRIX_V1.md
+src/types.ts
+src/db.ts
+src/components/ControlDashboard.tsx
 src/ai/routingContract.ts
 src/ai/routingShadow.ts
-src/types.ts
 ```
+
+Additional product evidence reviewed:
+
+- user-supplied internal maintenance-workflow evidence, reviewed read-only and not committed;
+- current first-party SAP Maintenance Management documentation on hierarchical technical objects, functional locations and equipment;
+- current first-party Zello and ElevenLabs documentation listed below.
 
 The recorded SHAs are historical provenance for this decision. Future implementation must revalidate live `main` and current owners.
 
@@ -62,7 +70,244 @@ A7 = current decision block
 
 A7 does not reopen A5 or A6.
 
-## 4. Minimal integration decision
+## 4. Reference-object finding from the maintenance workflow
+
+The reviewed maintenance workflow establishes a material product rule that the initial A7 draft did not make explicit.
+
+A breakdown is associated with an existing hierarchical reference object. The relevant structure is conceptually:
+
+```text
+technical location / workshop scope
+→ model
+→ installation
+→ operation
+→ element/device
+→ child element/subdevice when applicable
+→ responsible / priority
+→ save
+```
+
+BODYSHOP does not need to copy SAP naming or codes, but it must preserve this invariant:
+
+> A breakdown cannot be registered against a model, installation, operation, device or subdevice that does not exist in the active BODYSHOP reference catalog.
+
+Free text remains valid for the symptom/description. Free text is **not** a substitute for the reference-object hierarchy.
+
+## 5. Existing BODYSHOP catalog capability and current gap
+
+Current BODYSHOP already contains the correct first four catalog concepts:
+
+```text
+CatalogPlatform
+→ CatalogInstallation
+→ CatalogOperation
+→ CatalogElement
+```
+
+The Control form already filters the hierarchy by parent identifiers and active catalog state.
+
+For the future product vocabulary, `CatalogPlatform` may be presented to users as **Modelo** while the internal field/name may remain temporarily unchanged to avoid unnecessary migration churn.
+
+Current gap:
+
+```text
+CatalogElement = one flat level under Operation
+```
+
+The reviewed workflow and Albert's product requirement need:
+
+```text
+Operation
+→ Device / Element 1
+→ Subdevice / Element 2 (when applicable)
+```
+
+Therefore the reference catalog must support a parent-child technical-object level before Voice can claim complete reference-object mapping.
+
+## 6. Target synthetic catalog shape
+
+The first non-production catalog fixture should use synthetic names only.
+
+Target scale:
+
+```text
+3 models
+× 5 installations per model
+× 10 operations per installation
+= 150 operation nodes
+```
+
+Illustrative model codes:
+
+```text
+A01
+A02
+A03
+```
+
+Illustrative installation names for each model:
+
+```text
+Laterales
+Mascarón
+Autobastidor
+Puerta Derecha
+Puerta Izquierda
+```
+
+Illustrative operation codes per installation:
+
+```text
+OP100
+OP120
+OP140
+OP160
+OP180
+OP200
+OP220
+OP240
+OP260
+OP280
+```
+
+These are synthetic examples, not real plant master data.
+
+Devices and subdevices are **not** generated as a blind Cartesian product. Each operation contains only the device instances that actually belong to that operation in the fixture/master data.
+
+## 7. Device / subdevice model
+
+Representative device families may include:
+
+```text
+ROBOT
+CONTROL_SOLDADURA
+MESA_TRABAJO
+PINZA_SOLDADURA
+FRESADORA
+PLC_CONTROL
+TRANSPORTE / AEROVIA when applicable
+```
+
+Representative child components may include:
+
+```text
+ROBOT
+→ motor
+→ teach pendant
+→ armario eléctrico
+→ cableado/dress pack
+
+CONTROL_SOLDADURA
+→ control pinza
+→ control soldadura
+→ potencia
+→ comunicaciones
+
+MESA_TRABAJO
+→ brida
+→ detector
+→ cilindro
+→ válvula
+→ centrador
+
+PINZA_SOLDADURA
+→ servomotor/actuador
+→ transformador
+→ electrodos/caps
+→ circuito de agua
+
+FRESADORA
+→ motor
+→ cuchilla/fresa
+→ sensor
+→ accionamiento neumático
+```
+
+The definitive taxonomy belongs to BODYSHOP and must be accepted there. A7 does not make these illustrative component names canonical.
+
+## 8. Minimal-change data-model direction
+
+Because current BODYSHOP already owns `CatalogElement`, the preferred future direction is evolutionary rather than creating a second catalog system.
+
+Conceptually extend the existing element model with parent/level metadata, for example:
+
+```text
+CatalogElement
+  id
+  operation_id
+  parent_element_id | null
+  node_level        DEVICE | SUBDEVICE
+  element_type
+  component_kind    | null
+  name
+  technical_area_hint
+  specialty_hint
+  active
+```
+
+A root device has `parent_element_id = null`.
+
+A subdevice references exactly one valid parent device in the same operation.
+
+This preserves the existing `CatalogPlatform → CatalogInstallation → CatalogOperation → CatalogElement` foundation while adding the missing Element-1/Element-2 relationship.
+
+A future SQL design may express this as a self-reference or as separately normalized device/subdevice tables. That decision belongs to the canonical BODYSHOP Issue and is not authorized by A7.
+
+## 9. Registration validity gate
+
+Before a breakdown can be considered reference-valid, every supplied level must resolve through one active parent-child chain:
+
+```text
+model exists and active
+AND installation belongs to model and is active
+AND operation belongs to installation and is active
+AND device belongs to operation and is active
+AND, when supplied, subdevice belongs to device and is active
+```
+
+Failure at any level means:
+
+```text
+NO real breakdown registration
+NO invented catalog object
+NO silent fallback to free text
+NO guessed canonical element type
+```
+
+The system must request correction/clarification or leave the intake incomplete.
+
+A device-level report may remain valid when the catalog explicitly permits the device itself as the selected reference and the caller cannot identify a more specific child. The system must not fabricate a subdevice merely to fill the hierarchy.
+
+## 10. Voice alias rule
+
+Voice may hear workshop synonyms or variants, but language understanding does not grant catalog authority.
+
+Allowed:
+
+```text
+spoken alias
+→ resolve to one existing active catalog object
+→ confirm with operator when needed
+→ use canonical object id/name
+```
+
+Not allowed:
+
+```text
+spoken unknown term
+→ create new device
+```
+
+or:
+
+```text
+ambiguous alias
+→ choose one silently
+```
+
+A future alias library may improve matching, but every alias must terminate in an existing canonical catalog object.
+
+## 11. Minimal Voice integration decision
 
 The Voice PoC boundary is:
 
@@ -73,25 +318,20 @@ Voice-side channel/provider adapter
         ↓
 provider-neutral Voice observation
         ↓
-BODYSHOP boundary
+BODYSHOP reference-object resolution boundary
 ```
 
-From that boundary onward, BODYSHOP must retain ownership of validation, catalog/taxonomy resolution, routing, Shadow evaluation and lifecycle semantics.
-
-The intended future shape, subject to separate acceptance inside canonical BODYSHOP, is:
+From that boundary onward, BODYSHOP retains ownership of:
 
 ```text
-Voice observation
-        ↓
-BODYSHOP-side validation + domain normalization
-        ↓
-existing BODYSHOP Blind Shadow
-        ↓
-AI candidate evidence
-        vs
-human decision
-        ↓
-evaluation
+catalog validity
+reference-object identity
+canonical element type
+routing
+Shadow evaluation
+technician eligibility
+lifecycle semantics
+persistence
 ```
 
 Explicitly rejected on the Voice side:
@@ -99,81 +339,36 @@ Explicitly rejected on the Voice side:
 ```text
 Voice → direct Supabase/RPC lifecycle mutation
 Voice → second breakdown database
+Voice → parallel catalog
 Voice → parallel lifecycle
 Voice → authoritative technician assignment
 Voice → authoritative pre-close/final-close
 ```
 
-## 5. First integration should be intake-only
+## 12. First Voice handoff is confirmed intake, not authoritative registration
 
-The smallest useful future handoff is the already approved operator intake:
+The approved operator conversation remains:
 
 ```text
-operator phone call
-→ identity
-→ platform
+operator identity
+→ model
 → installation
 → operation
-→ faulty element/device
+→ device/element
+→ subdevice when known/applicable
 → problem description
 → line stopped yes/no
 → complete read-back
 → operator confirms
 ```
 
-Only after operator confirmation may Voice emit a confirmed-intake observation.
+After confirmation, Voice may emit an observation.
 
-The first implementation candidate must not include:
+That observation is still **not** an authoritative BODYSHOP breakdown registration.
 
-```text
-real technician assignment
-Zello transmit
-delivery acknowledgement
-technician arrival/intervention state
-real pre-close
-final close
-production restoration
-support/transfer
-Cloud persistence
-```
+BODYSHOP must first resolve the reference hierarchy against the active catalog.
 
-## 6. BODYSHOP capability available for reuse
-
-Current BODYSHOP `AI_ROUTING_CONTRACT_V1` already owns this routing input:
-
-```text
-description
-platform
-installation
-operation
-faulty_element
-element_type
-line_stopped
-```
-
-Current `AI_ROUTING_SHADOW_V1` already owns:
-
-```text
-input snapshot
-input fingerprint
-capture time
-human decision attached later
-providerInvoked
-DETERMINISTIC_RESOLVED
-AI_RECOMMEND
-AI_ABSTAIN
-AI_INVALID
-AI_ERROR
-SHADOW_EXCLUDED
-SHADOW_INVALID_INPUT
-DRY_RUN_NOT_EXECUTED
-```
-
-Therefore Voice must not build its own competing routing evaluator, fingerprint model, human-comparison lifecycle or breakdown store.
-
-Whether and how canonical BODYSHOP exposes an adapter to these existing capabilities is a later BODYSHOP-owned decision.
-
-## 7. Minimal provider-neutral Voice observation
+## 13. Minimal provider-neutral Voice observation
 
 A7 defines a conceptual transport object, not a shared package or dependency:
 
@@ -198,74 +393,62 @@ For the first integration candidate, only this intent is required:
 BREAKDOWN_INTAKE_CONFIRMED
 ```
 
-and `confirmed_breakdown` contains:
+`confirmed_breakdown` carries the operator-confirmed spoken/display values, not BODYSHOP authority:
 
 ```text
-platform
+model
 installation
 operation
-faulty_element
+device
+subdevice | null
 description
 line_stopped
 ```
 
-Voice does **not** provide BODYSHOP maintenance area, specialty, selected technician or canonical `element_type`.
-
-## 8. Catalog and element-type ownership
-
-Voice captures the element/device exactly as understood and confirmed with the operator.
-
-BODYSHOP currently owns canonical `CatalogElementType` and catalog metadata. A future BODYSHOP-side adapter should therefore resolve:
+Voice does **not** provide:
 
 ```text
-platform + installation + operation + confirmed element
-→ canonical catalog element
-→ canonical element_type
-→ AiRoutingInputV1
+maintenance area
+specialty
+selected technician
+canonical element_type
+catalog ids unless BODYSHOP supplied/confirmed them
 ```
 
-If the element cannot be resolved unambiguously:
+## 14. BODYSHOP Shadow remains the reuse target
+
+Current BODYSHOP `AI_ROUTING_CONTRACT_V1` already owns the provider-independent routing input:
 
 ```text
-DO NOT GUESS element_type
-DO NOT EVALUATE AS COMPLETE ROUTING INPUT
+description
+platform
+installation
+operation
+faulty_element
+element_type
+line_stopped
 ```
 
-This prevents Voice from creating a competing workshop taxonomy.
+Current `AI_ROUTING_SHADOW_V1` already owns input snapshot/fingerprint, later human-decision attachment and explicit recommend/abstain/invalid/error/excluded evidence states.
 
-## 9. Identity and timing boundary
+Voice must not build a competing routing evaluator, fingerprint model, comparison lifecycle or breakdown store.
 
-The Voice workflow asks the operator for name and surname, but current BODYSHOP routing Shadow does not require operator identity.
+After canonical BODYSHOP resolves a valid reference object, a future BODYSHOP-owned adapter may construct the existing routing input and reuse the existing Shadow capability.
 
-Do not add worker identity to `AiRoutingInputV1` merely because Voice captured it. Public/versioned Voice evidence continues to use dummy identities only.
-
-BODYSHOP canonical lifecycle also distinguishes event occurrence from system recording, including telephone/delayed reports. The conceptual observation therefore preserves:
-
-```text
-occurred_at
-recorded_at
-```
-
-Any future private persistence of real worker identity or additional evidence fields requires a separately authorized BODYSHOP data/privacy boundary.
-
-## 10. Transcript confidence is not decision confidence
+## 15. Transcript confidence is not domain confidence
 
 Zello's official Channel API documents optional transcription events containing transcription confidence.
 
-That value is evidence about transcription accuracy. It is **not**:
+That value is evidence about transcription accuracy. It is not routing confidence, lifecycle confidence, safety confidence or permission to mutate BODYSHOP.
 
-```text
-routing confidence
-pre-close confidence
-safety confidence
-permission to mutate BODYSHOP
-```
-
-Keep the layers separate:
+Keep separate:
 
 ```text
 STT/channel confidence
 → transcript quality
+
+catalog resolution
+→ valid / invalid / ambiguous reference object
 
 BODYSHOP routing
 → deterministic / recommend / abstain / invalid / error
@@ -274,119 +457,37 @@ human decision
 → authoritative Shadow comparison target
 ```
 
-## 11. ElevenLabs position
+## 16. ElevenLabs position
 
-ElevenLabs official documentation supports two relevant future mechanisms:
+ElevenLabs official documentation supports post-call transcription webhooks and in-call webhook tools.
 
-### Post-call transcription webhooks
+Post-call webhooks are useful for audit/evidence and provider/version correlation, but arrive after call completion/analysis and must not be treated as the only real-time handoff mechanism.
 
-They arrive after the call has ended and analysis is complete, can contain transcript/conversation metadata and support HMAC signature validation.
+If webhook tools are used later, the destination must be a bounded Voice/Shadow boundary. Voice must not expose authoritative BODYSHOP lifecycle mutation endpoints directly to the provider.
 
-Use case for BODYSHOP Voice:
+## 17. Zello position
 
-```text
-post-call audit/evidence
-provider/version correlation
-later evaluation
-```
+The official Zello Channel API documents `features.transcriptions = true` and `on_transcription` events, where supported, including stream id, sender, text, confidence and language.
 
-They must not be treated as the sole mechanism for a fact that needs to be handed off during a live call.
+Native Zello transcription is therefore a reasonable future test candidate before adding another STT provider. Its workshop accuracy must be measured; A7 makes no adequacy claim.
 
-### Webhook tools
+Zello Work also documents talk priorities where High interrupts Normal/Low and Normal interrupts Low. A future laboratory may test AI at Low priority and humans above it, but this is a test hypothesis, not a Production policy.
 
-ElevenLabs agents can call external APIs during a conversation.
+## 18. Relevo lessons used only as design inspiration
 
-If used later, the destination should be a bounded Voice/Shadow endpoint. Voice must not expose authoritative BODYSHOP lifecycle mutation endpoints directly to the provider.
-
-## 12. Zello position
-
-The official Zello Channel API documents `features.transcriptions = true` and `on_transcription` events, when supported by the network, including:
+Useful concepts retained:
 
 ```text
-stream_id
-sender
-text
-confidence
-language
+channel-adapter boundary
+transcript separated from semantic interpretation
+human-first PTT discipline
+trace source utterance → interpretation → output → human response
+network sender identity instead of voice biometrics when available
 ```
 
-Therefore native Zello transcription is a reasonable **future test candidate** before adding another STT provider.
+No Relevo code or implementation text is copied. The reviewed repository root showed no visible LICENSE file.
 
-This document does not claim it is accurate enough for workshop noise, accents or vocabulary. That must be measured with dummy BODYSHOP language before adoption.
-
-Zello Work also documents talk priorities:
-
-```text
-High   → interrupts Normal and Low
-Normal → interrupts Low
-Low    → cannot interrupt
-```
-
-A future lab may test AI at Low priority and humans above it, but this is a hypothesis for physical validation, not a Production policy and not an A7 implementation task.
-
-## 13. Relevo lessons used only as design inspiration
-
-Reviewed repository:
-
-```text
-https://github.com/Axerra1/relevo
-```
-
-Useful ideas:
-
-- channel-adapter boundary;
-- transcript separated from semantic interpretation;
-- humans retain PTT priority;
-- trace source utterance → interpretation → output → human response;
-- use network sender identity instead of voice biometrics when the channel already provides identity.
-
-The reviewed repository root showed no visible `LICENSE` file. Therefore:
-
-```text
-NO CODE COPY
-NO IMPLEMENTATION-TEXT COPY
-CONCEPTUAL INSPIRATION ONLY
-```
-
-Every adopted concept must still be independently supported by BODYSHOP contracts and/or official provider documentation.
-
-## 14. Traceability target
-
-A future integration should be able to correlate:
-
-```text
-Voice observation id
-→ source/provider reference
-→ transcript
-→ confirmed intake
-→ BODYSHOP Shadow input fingerprint
-→ candidate routing evidence
-→ later human decision
-→ comparison
-```
-
-Voice must not create a second permanent event store merely to duplicate BODYSHOP evidence.
-
-## 15. Technician-resolution voice is later scope
-
-The merged Voice communication contract recognizes phrases such as:
-
-```text
-"Avería solucionada"
-"Puedes cerrar la avería"
-```
-
-They may later map to a non-authoritative candidate intent such as:
-
-```text
-REQUEST_PRE_CLOSE_CANDIDATE
-```
-
-They are deliberately **not** part of the first integration candidate.
-
-Current canonical BODYSHOP requires the current owner Technician to report physical resolution and active Control/Admin to perform normal pre-close; final technical close remains a later Technician action. A future voice path must preserve identity, current ownership, lifecycle state, timing, equipment-condition evidence and actor authority.
-
-## 16. Provider DRIFT and missing transports
+## 19. Provider DRIFT and missing transports
 
 A5 provider result remains:
 
@@ -397,10 +498,11 @@ DRIFT
 Classification:
 
 ```text
-A7 Voice-side architecture decision              NOT BLOCKED
-provider-neutral contract/test work              NOT BLOCKED
-claim of aligned ElevenLabs behavior             BLOCKED BY DRIFT
-real ElevenLabs end-to-end acceptance            requires drift resolution or explicit new expected-state decision
+A7 Voice-side decision                         NOT BLOCKED
+canonical catalog design                       NOT BLOCKED
+provider-neutral contract/test work            NOT BLOCKED
+claim of aligned ElevenLabs behavior           BLOCKED BY DRIFT
+real ElevenLabs end-to-end acceptance          requires drift resolution or explicit new expected-state decision
 ```
 
 A6 also established:
@@ -410,22 +512,13 @@ DIRECT_PHONE_AI_PATH: NOT_AVAILABLE
 FULL_AI_CONTROL_TO_F400_PATH: NOT_AVAILABLE
 ```
 
-Classification:
+These limitations block real transport proof, not the provider-neutral catalog/reference decision.
 
-```text
-architecture/contract decision                   NOT BLOCKED
-pure provider-neutral adapter work               NOT BLOCKED
-real phone → BODYSHOP runtime proof               blocked until transport exists
-full phone → AI → Zello/F400 visible proof        blocked until required transports exist
-```
-
-These are real limitations, but they are not reasons to add transport complexity before the provider-neutral boundary is proven.
-
-## 17. Next implementation candidate
+## 20. Next implementation candidate — revised by the reference-object finding
 
 A7 identifies one candidate only:
 
-# BODYSHOP Voice Shadow Intake Adapter V1
+# BODYSHOP Reference Object Catalog V1
 
 Candidate repository:
 
@@ -436,34 +529,53 @@ egaracode/AI-Control-Workshop
 Proposed responsibility:
 
 ```text
-confirmed Voice intake fixture/observation
-→ validate fields
-→ resolve canonical BODYSHOP element/type
-→ construct AiRoutingInputV1
-→ use existing RoutingShadow capture/fingerprint
-→ return Shadow-ready evidence
+3 synthetic models
+→ 5 installations per model
+→ 10 operations per installation
+→ operation-specific device instances
+→ device-specific subdevices
+→ active parent-child validation
+→ deterministic catalog lookup for later Voice/Control use
 ```
 
-Prohibited in that candidate unless a future BODYSHOP Issue explicitly says otherwise:
+It should reuse/evolve the existing catalog model rather than introduce a second catalog.
+
+The candidate must establish the rule:
 
 ```text
-ElevenLabs calls
-Zello calls
-Supabase calls
-real breakdown creation
-real technician assignment
-pre-close
-final-close
-Production mutation
+NO valid active reference path
+= NO authoritative breakdown registration
 ```
 
-This is a **candidate**, not authorization and not a canonical BODYSHOP decision. Before any implementation, `AI-Control-Workshop` must independently revalidate its current `main`, owners, open work and governance and Albert must authorize the BODYSHOP Issue.
+It must not, merely because A7 names it:
 
-A7 intentionally does not create a nested roadmap beyond this one candidate.
+```text
+change Supabase
+add SQL
+change Production
+modify provider configuration
+provision telephony
+configure Zello
+create real plant master data
+```
 
-## 18. Official external sources consulted
+This is a **candidate**, not authorization and not a canonical BODYSHOP decision. Before implementation, `AI-Control-Workshop` must independently revalidate its current main, canonical owners, open work and governance and Albert must authorize its exact Issue/scope.
+
+Only after that catalog/reference block is accepted should the next BODYSHOP integration decision determine whether a `Voice Shadow Intake Adapter` is ready to consume it.
+
+## 21. Official external sources consulted
 
 Consulted: 2026-09-16.
+
+### SAP Maintenance Management — Technical Objects / Equipment
+
+Publisher: SAP Help Portal
+
+Engineering consequence:
+
+- maintenance structures may combine hierarchical functional locations with equipment;
+- equipment/technical objects are maintained as master records and can be installed within functional locations;
+- hierarchical technical-object structures are a standard maintenance-data pattern.
 
 ### Zello Channel API specification
 
@@ -472,11 +584,10 @@ Publisher: Zello official GitHub organization
 Reference:
 https://github.com/zelloptt/zello-channel-api/blob/main/API.md
 
-Supports:
+Engineering consequence:
 
-- Channel API stream/sender metadata;
-- optional `features.transcriptions`;
-- `on_transcription` with `stream_id`, sender, transcript text, confidence and language when supported.
+- channel stream/sender metadata;
+- optional transcription events and confidence/language metadata.
 
 ### Zello Work — Talk priority
 
@@ -485,12 +596,11 @@ Publisher: Zello
 Reference:
 https://support.zello.com/zw/talk-priority
 
-Supports:
+Engineering consequence:
 
 - High interrupts Normal/Low;
 - Normal interrupts Low;
-- Low cannot interrupt;
-- same-priority timeout rules and emergency behavior remain provider-defined.
+- future human-priority assumptions require runtime validation.
 
 ### ElevenLabs — Post-call webhooks
 
@@ -499,11 +609,11 @@ Publisher: ElevenLabs
 Reference:
 https://elevenlabs.io/docs/eleven-agents/workflows/post-call-webhooks
 
-Supports:
+Engineering consequence:
 
-- post-call transcription data after call analysis;
-- transcript and conversation metadata;
-- HMAC webhook verification.
+- post-call transcript/conversation evidence;
+- HMAC webhook verification;
+- post-call timing is unsuitable as the sole mechanism for live handoff.
 
 ### ElevenLabs — Webhook tools
 
@@ -512,11 +622,12 @@ Publisher: ElevenLabs
 Reference:
 https://elevenlabs.io/docs/eleven-agents/customization/tools/webhook-tools
 
-Supports:
+Engineering consequence:
 
-- agent calls to external REST APIs during a conversation.
+- an agent can call external REST APIs during a conversation;
+- A7 keeps providers away from authoritative BODYSHOP lifecycle mutation endpoints.
 
-## 19. Explicit exclusions
+## 22. Explicit exclusions
 
 A7 does not authorize or implement:
 
@@ -524,6 +635,7 @@ A7 does not authorize or implement:
 AI-Control-Workshop modification
 Supabase / SQL / migrations / RLS / RPC / Auth
 BODYSHOP lifecycle mutation
+real plant master data
 real breakdown creation
 real technician assignment
 real pre-close or final close
@@ -531,7 +643,7 @@ ElevenLabs write / Publish / configuration mutation
 phone/SIP provisioning
 Zello API runtime integration
 Zello Work priority/role changes
-F400 software/runtime modification
+F400 runtime modification
 Production
 corporate network integration
 secrets/.env
@@ -539,28 +651,30 @@ new dependencies
 CI/workflow changes
 ```
 
-## 20. Acceptance result
+## 23. Acceptance result
 
 A7 is complete as a Voice-lab decision when:
 
 ```text
-ONE minimal boundary is documented
-BODYSHOP authority is preserved
-NO second breakdown system is introduced
+ONE provider-neutral boundary is documented
+reference-object validity is mandatory
+BODYSHOP catalog authority is preserved
+NO second catalog or breakdown system is introduced
 NO direct Voice → Supabase lifecycle mutation is proposed
-existing BODYSHOP routing Shadow is the reuse target
-transcription confidence is separated from semantic authority
+existing BODYSHOP routing Shadow remains the reuse target after catalog resolution
+transcription confidence is separated from catalog/routing authority
 provider DRIFT is correctly classified
 missing transports are correctly classified
 ONE next implementation candidate is identified
 current official-source basis is recorded
 ```
 
-## 21. Stop point
+## 24. Stop point
 
 ```text
 A7_BODYSHOP_VOICE_INTEGRATION_DECISION_V1: DOCUMENTED
-NEXT_IMPLEMENTATION_CANDIDATE: BODYSHOP Voice Shadow Intake Adapter V1
+REFERENCE_OBJECT_GATE: REQUIRED
+NEXT_IMPLEMENTATION_CANDIDATE: BODYSHOP Reference Object Catalog V1
 NEXT_IMPLEMENTATION: NOT AUTHORIZED
 ```
 
