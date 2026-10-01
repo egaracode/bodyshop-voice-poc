@@ -148,6 +148,12 @@ class ReferenceResolutionHarnessTests(unittest.TestCase):
         with self.assertRaises(rrh.HarnessError):
             rrh.validate_fixture(fixture)
 
+    def test_fixture_reference_id_cannot_look_canonical(self):
+        fixture = copy.deepcopy(self.fixture)
+        fixture["paths"][0]["reference_path_id"] = "00000000-0000-4000-8000-000000000001"
+        with self.assertRaises(rrh.HarnessError):
+            rrh.validate_fixture(fixture)
+
     def test_harness_imports_no_network_or_provider_client(self):
         tree = ast.parse(TOOL_PATH.read_text(encoding="utf-8"))
         imported = set()
