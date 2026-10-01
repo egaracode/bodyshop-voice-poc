@@ -32,9 +32,10 @@ A6  Voice / Audio Validation
     PR #19 MERGED
     provider-dependent expected-config PASS remains gated by A5 DRIFT
 
-A7  Future BODYSHOP Integration Evaluation
-    only if preceding evidence is acceptable
-    GATED / NOT AUTHORIZED
+A7  BODYSHOP Voice Shadow Integration Decision V1
+    MERGED / COMPLETE
+    Issue #24 CLOSED / completed
+    PR #25 MERGED
 ```
 
 ## 3. A2 and A3
@@ -119,7 +120,7 @@ PHYSICAL_EXECUTION_ANCHOR: 5705ee53adad83561b6517baf51ca7efc0841675
 TARGETED_MEASUREMENTS: COMPLETE
 FINAL_AUDIT: COMPLETE
 PROVIDER_WRITE: NOT_AUTHORIZED / NOT_PERFORMED
-A7: NOT_AUTHORIZED
+A7: MERGED / COMPLETE
 ```
 
 A6 owns real audio/channel evidence for the available isolated F400/Zello laboratory path.
@@ -161,13 +162,31 @@ Because A5 ended with provider `DRIFT`, A6 does not claim expected-provider sema
 
 A6 is merged with its exact-latency distribution limitation explicitly retained rather than guessed.
 
-## 7. A7 — Future BODYSHOP Integration Evaluation
+## 7. A7 — BODYSHOP Voice Shadow Integration Decision V1
 
-A7 is a gated future evaluation only.
+A7 is merged and complete.
 
-It may evaluate a future integration path with BODYSHOP PRO only after the isolated Voice PoC has accumulated acceptable semantic, provider-control and audio evidence and after Albert explicitly authorizes A7.
+Final record:
 
-A7 does not authorize Supabase, `AI-Control-Workshop`, production, corporate-network or lifecycle changes.
+```text
+ISSUE: #24 CLOSED / completed
+PR: #25 MERGED
+FINAL_HEAD: 3ef8f2371c913e81f030f3c2d9102d51df940a81
+MERGE_COMMIT: 2b2343d3cd99a4f8e9a00169f4f2fbbceb1326ad
+DECISION: docs/A7_BODYSHOP_VOICE_INTEGRATION_DECISION_V1.md
+```
+
+A7 establishes the Voice-side integration boundary against the canonical BODYSHOP Reference Object Catalog. Voice must not mint or guess canonical `referencePathId` values and must not create a second catalog, breakdown store or lifecycle authority.
+
+The next gated implementation candidate identified by A7 is:
+
+```text
+Voice Reference Resolution Harness V1
+```
+
+That candidate is **not authorized by this roadmap**. It requires its own Issue, branch, validation and Albert authorization.
+
+A7 did not modify Supabase, `AI-Control-Workshop`, Production, corporate-network state or BODYSHOP lifecycle state.
 
 ## 8. Sequencing rule
 
@@ -177,7 +196,8 @@ A2 MERGED
 → A4 CLOSED / SUPERSEDED / NOT_PASS
 → A5 PROVIDER CONTROL HARNESS MERGED / PHASE 1 COMPLETE
 → A6 REAL VOICE/AUDIO MERGED / EVIDENCE_COMPLETE_WITH_RETAINED_LIMITATIONS
-→ A7 FUTURE INTEGRATION EVALUATION GATED / NOT AUTHORIZED
+→ A7 BODYSHOP VOICE SHADOW INTEGRATION DECISION MERGED / COMPLETE
+→ NEXT CANDIDATE: VOICE REFERENCE RESOLUTION HARNESS V1 / NOT AUTHORIZED
 ```
 
 Each block remains governed by:
@@ -241,6 +261,10 @@ A6_OBJECTIVE_LATENCY_DISTRIBUTION: UNVERIFIABLE
 A6_PROLONGED_SESSION: PASS
 A6_DIRECT_PHONE_AI_PATH: NOT_AVAILABLE
 A6_PROVIDER_WRITE: NOT_AUTHORIZED / NOT_PERFORMED
-NEXT_GATED_BLOCK: A7
-A7_STATUS: NOT_AUTHORIZED
+A7_STATUS: MERGED / COMPLETE
+A7_ISSUE: #24 CLOSED / completed
+A7_PR: #25 MERGED
+A7_MERGE_COMMIT: 2b2343d3cd99a4f8e9a00169f4f2fbbceb1326ad
+NEXT_GATED_BLOCK: Voice Reference Resolution Harness V1
+NEXT_GATED_BLOCK_STATUS: NOT_AUTHORIZED
 ```
