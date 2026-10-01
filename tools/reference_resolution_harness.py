@@ -18,6 +18,7 @@ from pathlib import Path
 from typing import Any
 
 FIXTURE_AUTHORITY = "NON_CANONICAL_TEST_FIXTURE"
+FIXTURE_REFERENCE_PREFIX = "fixture-ref-"
 SCHEMA_VERSION = 1
 OUTCOMES = ("RESOLVED", "INCOMPLETE", "AMBIGUOUS", "NOT_FOUND")
 GRAINS = ("DEVICE", "DEVICE_SUBDEVICE")
@@ -114,6 +115,11 @@ def validate_fixture(fixture: Any) -> None:
         reference_path_id = _require_text(
             path.get("reference_path_id"), f"{label}.reference_path_id"
         )
+        if not reference_path_id.startswith(FIXTURE_REFERENCE_PREFIX):
+            raise HarnessError(
+                f"{label}.reference_path_id must use non-canonical prefix "
+                f"{FIXTURE_REFERENCE_PREFIX!r}"
+            )
         if reference_path_id in seen_ids:
             raise HarnessError(f"Duplicate reference_path_id {reference_path_id!r}")
         seen_ids.add(reference_path_id)
