@@ -724,16 +724,3 @@ NEXT_IMPLEMENTATION: NOT AUTHORIZED BY A7
 Albert retains Ready, merge and authorization of the future implementation candidate.
 
 No BODYSHOP canonical-state update is required by this documentation-only Voice-lab decision.
-
-
-
-```text
-A7_BODYSHOP_VOICE_INTEGRATION_DECISION_V1: DOCUMENTED
-REFERENCE_OBJECT_GATE: REQUIRED
-NEXT_IMPLEMENTATION_CANDIDATE: BODYSHOP Reference Object Catalog V1
-NEXT_IMPLEMENTATION: NOT AUTHORIZED
-```
-
-Albert retains Ready, merge and authorization of any future BODYSHOP implementation.
-
-No BODYSHOP canonical-state update required by this documentation-only Voice-lab decision.
