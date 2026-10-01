@@ -163,6 +163,13 @@ def _matches(node: dict[str, Any], observed: str) -> bool:
     return needle in {normalize_label(value) for value in values}
 
 
+def _device_context_key(path: dict[str, Any]) -> tuple[str, ...]:
+    return tuple(
+        normalize_label(path[field]["value"])
+        for field in ("workshop", "model", "installation", "operation", "device")
+    )
+
+
 def resolve_reference(fixture: dict[str, Any], observation: dict[str, Any]) -> ResolutionResult:
     validate_fixture(fixture)
     if not isinstance(observation, dict):
@@ -204,18 +211,24 @@ def resolve_reference(fixture: dict[str, Any], observation: dict[str, Any]) -> R
     if not device_matches:
         return ResolutionResult(outcome="NOT_FOUND", reason="device_not_found")
 
-    devices: dict[str, list[dict[str, Any]]] = {}
+    device_contexts: dict[tuple[str, ...], list[dict[str, Any]]] = {}
     for path in device_matches:
-        devices.setdefault(normalize_label(path["device"]["value"]), []).append(path)
-    if len(devices) > 1:
+        device_contexts.setdefault(_device_context_key(path), []).append(path)
+    if len(device_contexts) > 1:
         return ResolutionResult(
             outcome="AMBIGUOUS",
             reason="multiple_device_candidates",
-            candidate_count=len(devices),
+            candidate_count=len(device_contexts),
         )
 
-    paths_for_device = next(iter(devices.values()))
+    paths_for_device = next(iter(device_contexts.values()))
     subdevice_value = observation.get("subdevice")
+    if subdevice_value is not None and not isinstance(subdevice_value, str):
+        return ResolutionResult(
+            outcome="INCOMPLETE",
+            reason="invalid_subdevice_value",
+            missing_fields=("subdevice",),
+        )
     if isinstance(subdevice_value, str) and subdevice_value.strip():
         child_matches = [
             path
