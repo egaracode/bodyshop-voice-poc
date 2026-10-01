@@ -88,6 +88,20 @@ class ReferenceResolutionHarnessTests(unittest.TestCase):
         self.assertEqual(2, result.candidate_count)
         self.assertIsNone(result.reference_path_id)
 
+    def test_ambiguous_parent_alias_fails_closed(self):
+        fixture = copy.deepcopy(self.fixture)
+        fixture["paths"][0]["workshop"]["aliases"].append("Taller Compartido")
+        duplicate = copy.deepcopy(fixture["paths"][0])
+        duplicate["reference_path_id"] = "fixture-ref-t02-a01-latizq-op100-r01"
+        duplicate["workshop"] = {"value": "T02", "aliases": ["Taller Compartido"]}
+        fixture["paths"].append(duplicate)
+        result = rrh.resolve_reference(
+            fixture, self.observation(workshop_scope="Taller Compartido")
+        )
+        self.assertEqual("AMBIGUOUS", result.outcome)
+        self.assertEqual(2, result.candidate_count)
+        self.assertIsNone(result.reference_path_id)
+
     def test_missing_workshop_scope_is_incomplete(self):
         result = rrh.resolve_reference(self.fixture, self.observation(workshop_scope=None))
         self.assertEqual("INCOMPLETE", result.outcome)
@@ -97,6 +111,12 @@ class ReferenceResolutionHarnessTests(unittest.TestCase):
         result = rrh.resolve_reference(self.fixture, self.observation(operation=""))
         self.assertEqual("INCOMPLETE", result.outcome)
         self.assertIn("operation", result.missing_fields)
+
+    def test_malformed_subdevice_value_is_incomplete(self):
+        result = rrh.resolve_reference(self.fixture, self.observation(subdevice=123))
+        self.assertEqual("INCOMPLETE", result.outcome)
+        self.assertEqual("invalid_subdevice_value", result.reason)
+        self.assertIn("subdevice", result.missing_fields)
 
     def test_inactive_path_is_not_selectable(self):
         result = rrh.resolve_reference(self.fixture, self.observation(device="Robot 99"))
