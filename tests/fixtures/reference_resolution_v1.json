@@ -1,0 +1,83 @@
+{
+  "schema_version": 1,
+  "authority": "NON_CANONICAL_TEST_FIXTURE",
+  "paths": [
+    {
+      "reference_path_id": "fixture-ref-t01-a01-latizq-op100-r01",
+      "grain": "DEVICE",
+      "active": true,
+      "workshop": {"value": "T01", "aliases": ["Taller 1", "Taller Uno"]},
+      "model": {"value": "A01", "aliases": ["Modelo A01"]},
+      "installation": {"value": "LAT-IZQ", "aliases": ["Laterales Izquierda", "Lateral Izquierdo"]},
+      "operation": {"value": "OP100", "aliases": ["Operacion 100"]},
+      "device": {"value": "Robot 01", "aliases": ["Robot 1", "Robot Uno", "Robot Principal"]},
+      "subdevice": null
+    },
+    {
+      "reference_path_id": "fixture-ref-t01-a01-latizq-op100-r01-motor",
+      "grain": "DEVICE_SUBDEVICE",
+      "active": true,
+      "workshop": {"value": "T01", "aliases": ["Taller 1", "Taller Uno"]},
+      "model": {"value": "A01", "aliases": ["Modelo A01"]},
+      "installation": {"value": "LAT-IZQ", "aliases": ["Laterales Izquierda", "Lateral Izquierdo"]},
+      "operation": {"value": "OP100", "aliases": ["Operacion 100"]},
+      "device": {"value": "Robot 01", "aliases": ["Robot 1", "Robot Uno", "Robot Principal"]},
+      "subdevice": {"value": "Motor", "aliases": ["Motor Robot"]}
+    },
+    {
+      "reference_path_id": "fixture-ref-t01-a01-latizq-op100-r01-armario",
+      "grain": "DEVICE_SUBDEVICE",
+      "active": true,
+      "workshop": {"value": "T01", "aliases": ["Taller 1", "Taller Uno"]},
+      "model": {"value": "A01", "aliases": ["Modelo A01"]},
+      "installation": {"value": "LAT-IZQ", "aliases": ["Laterales Izquierda", "Lateral Izquierdo"]},
+      "operation": {"value": "OP100", "aliases": ["Operacion 100"]},
+      "device": {"value": "Robot 01", "aliases": ["Robot 1", "Robot Uno", "Robot Principal"]},
+      "subdevice": {"value": "Armario Electrico", "aliases": ["Armario", "Cuadro Robot"]}
+    },
+    {
+      "reference_path_id": "fixture-ref-t01-a01-latizq-op100-r02",
+      "grain": "DEVICE",
+      "active": true,
+      "workshop": {"value": "T01", "aliases": ["Taller 1", "Taller Uno"]},
+      "model": {"value": "A01", "aliases": ["Modelo A01"]},
+      "installation": {"value": "LAT-IZQ", "aliases": ["Laterales Izquierda", "Lateral Izquierdo"]},
+      "operation": {"value": "OP100", "aliases": ["Operacion 100"]},
+      "device": {"value": "Robot 02", "aliases": ["Robot 2", "Robot Dos", "Robot Principal"]},
+      "subdevice": null
+    },
+    {
+      "reference_path_id": "fixture-ref-t01-a01-latizq-op100-mesa01",
+      "grain": "DEVICE",
+      "active": true,
+      "workshop": {"value": "T01", "aliases": ["Taller 1", "Taller Uno"]},
+      "model": {"value": "A01", "aliases": ["Modelo A01"]},
+      "installation": {"value": "LAT-IZQ", "aliases": ["Laterales Izquierda", "Lateral Izquierdo"]},
+      "operation": {"value": "OP100", "aliases": ["Operacion 100"]},
+      "device": {"value": "Mesa 01", "aliases": ["Mesa 1", "Mesa Trabajo"]},
+      "subdevice": null
+    },
+    {
+      "reference_path_id": "fixture-ref-t01-a01-latizq-op200-r03-motor",
+      "grain": "DEVICE_SUBDEVICE",
+      "active": true,
+      "workshop": {"value": "T01", "aliases": ["Taller 1", "Taller Uno"]},
+      "model": {"value": "A01", "aliases": ["Modelo A01"]},
+      "installation": {"value": "LAT-IZQ", "aliases": ["Laterales Izquierda", "Lateral Izquierdo"]},
+      "operation": {"value": "OP200", "aliases": ["Operacion 200"]},
+      "device": {"value": "Robot 03", "aliases": ["Robot 3", "Robot Tres"]},
+      "subdevice": {"value": "Motor", "aliases": ["Motor Robot"]}
+    },
+    {
+      "reference_path_id": "fixture-ref-t01-a01-latizq-op100-r99",
+      "grain": "DEVICE",
+      "active": false,
+      "workshop": {"value": "T01", "aliases": ["Taller 1", "Taller Uno"]},
+      "model": {"value": "A01", "aliases": ["Modelo A01"]},
+      "installation": {"value": "LAT-IZQ", "aliases": ["Laterales Izquierda", "Lateral Izquierdo"]},
+      "operation": {"value": "OP100", "aliases": ["Operacion 100"]},
+      "device": {"value": "Robot 99", "aliases": ["Robot Inactivo"]},
+      "subdevice": null
+    }
+  ]
+}
