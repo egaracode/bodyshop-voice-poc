@@ -36,6 +36,12 @@ A7  BODYSHOP Voice Shadow Integration Decision V1
     MERGED / COMPLETE
     Issue #24 CLOSED / completed
     PR #25 MERGED
+
+Post-A7  Voice Reference Resolution Harness V1
+    MERGED / COMPLETE
+    Issue #28 CLOSED / completed
+    PR #29 MERGED
+    full repository regression: 30/30 PASS
 ```
 
 ## 3. A2 and A3
@@ -178,13 +184,23 @@ DECISION: docs/A7_BODYSHOP_VOICE_INTEGRATION_DECISION_V1.md
 
 A7 establishes the Voice-side integration boundary against the canonical BODYSHOP Reference Object Catalog. Voice must not mint or guess canonical `referencePathId` values and must not create a second catalog, breakdown store or lifecycle authority.
 
-The next gated implementation candidate identified by A7 is:
+The first gated implementation candidate identified by A7 was:
 
 ```text
 Voice Reference Resolution Harness V1
 ```
 
-That candidate is **not authorized by this roadmap**. It requires its own Issue, branch, validation and Albert authorization.
+That candidate has since been completed independently under the repository's normal governance:
+
+```text
+ISSUE: #28 CLOSED / completed
+PR: #29 MERGED
+FINAL_HEAD: f77ea31a1327551cc0a6a9e94afd5e22e533724b
+MERGE_COMMIT: 251a526b1116a79efcaa69f0b5328fb8eec9e4d3
+FULL_REPOSITORY_REGRESSION: 30/30 PASS
+```
+
+A7 also records that, after the resolver contract is proven, a separate canonical BODYSHOP block may evaluate a real Voice Shadow Intake Adapter. This roadmap does **not** select or authorize that or any other next implementation block.
 
 A7 did not modify Supabase, `AI-Control-Workshop`, Production, corporate-network state or BODYSHOP lifecycle state.
 
@@ -197,7 +213,8 @@ A2 MERGED
 → A5 PROVIDER CONTROL HARNESS MERGED / PHASE 1 COMPLETE
 → A6 REAL VOICE/AUDIO MERGED / EVIDENCE_COMPLETE_WITH_RETAINED_LIMITATIONS
 → A7 BODYSHOP VOICE SHADOW INTEGRATION DECISION MERGED / COMPLETE
-→ NEXT CANDIDATE: VOICE REFERENCE RESOLUTION HARNESS V1 / NOT AUTHORIZED
+→ VOICE REFERENCE RESOLUTION HARNESS V1 MERGED / COMPLETE
+→ NEXT IMPLEMENTATION BLOCK: UNSELECTED / REQUIRES SEPARATE ALBERT DECISION
 ```
 
 Each block remains governed by:
@@ -265,6 +282,12 @@ A7_STATUS: MERGED / COMPLETE
 A7_ISSUE: #24 CLOSED / completed
 A7_PR: #25 MERGED
 A7_MERGE_COMMIT: 2b2343d3cd99a4f8e9a00169f4f2fbbceb1326ad
-NEXT_GATED_BLOCK: Voice Reference Resolution Harness V1
-NEXT_GATED_BLOCK_STATUS: NOT_AUTHORIZED
+REFERENCE_RESOLUTION_HARNESS_STATUS: MERGED / COMPLETE
+REFERENCE_RESOLUTION_HARNESS_ISSUE: #28 CLOSED / completed
+REFERENCE_RESOLUTION_HARNESS_PR: #29 MERGED
+REFERENCE_RESOLUTION_HARNESS_HEAD: f77ea31a1327551cc0a6a9e94afd5e22e533724b
+REFERENCE_RESOLUTION_HARNESS_MERGE_COMMIT: 251a526b1116a79efcaa69f0b5328fb8eec9e4d3
+REFERENCE_RESOLUTION_HARNESS_REGRESSION: 30/30 PASS
+NEXT_GATED_BLOCK: UNSELECTED
+NEXT_GATED_BLOCK_STATUS: REQUIRES_SEPARATE_ALBERT_DECISION_AND_AUTHORIZATION
 ```
