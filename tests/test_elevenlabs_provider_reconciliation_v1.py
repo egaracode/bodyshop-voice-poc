@@ -154,6 +154,23 @@ class ReconciliationPlannerV1Tests(unittest.TestCase):
             v1.sha256_text("mainbranch_SECRET_RAW"),
             verify_branch["expected_safe"]["parent_branch_id_sha256"],
         )
+        staging_writes = [
+            plan["planned_operations"][0],
+            plan["planned_operations"][2],
+            plan["planned_operations"][3],
+            plan["planned_operations"][4],
+        ]
+        self.assertTrue(
+            all(
+                op["approval_gate"] == "STAGING_WRITE_SET_APPROVAL_REQUIRED"
+                for op in staging_writes
+            )
+        )
+        final_config = plan["planned_operations"][6]
+        self.assertEqual(
+            "FINAL_ISOLATED_CONFIG_APPROVAL_REQUIRED",
+            final_config["approval_gate"],
+        )
         preview = plan["planned_operations"][-2]
         merge = plan["planned_operations"][-1]
         expected_target = v1.sha256_text("mainbranch_SECRET_RAW")
@@ -200,6 +217,10 @@ class ReconciliationPlannerV1Tests(unittest.TestCase):
         self.assertNotIn("DELETE", methods)
         self.assertIn(
             "DELETE draft as committed Procedure removal", plan["prohibited"]
+        )
+        self.assertIn(
+            "final isolated config PATCH before resolved Procedure refs are separately approved",
+            plan["prohibited"],
         )
 
     def test_provider_main_merge_has_separate_approval_gate_and_no_force(self):
