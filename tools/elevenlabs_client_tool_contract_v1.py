@@ -412,8 +412,10 @@ def build_sanitized_write_set(
             ],
         },
         "operator_contract_gap": {
+            "gate1_requires_workshop_context": True,
             "gate1_requires_complete_readback_confirmation": True,
             "gate1_requires_line_stopped": True,
+            "current_a5_expected_operator_procedure_collects_workshop": False,
             "current_a5_expected_operator_procedure_collects_line_stopped": False,
             "current_a5_expected_operator_procedure_explicitly_requires_complete_readback_confirmation": False,
             "classification": "EXPECTED_STATE_DECISION_REQUIRED",
@@ -482,8 +484,8 @@ def build_sanitized_write_set(
                 "order": 6,
                 "method": "BLOCKED_DECISION",
                 "reason": (
-                    "Gate 1 requires line_stopped plus complete read-back confirmation, "
-                    "while the current A5 expected Operator breakdown contract does not. "
+                    "Gate 1 requires workshop context, line_stopped and complete read-back confirmation, "
+                    "while the current A5 expected Operator breakdown contract does not provide them. "
                     "Do not change provider behavior until Albert accepts the expected-state delta."
                 ),
                 "approval_gate": "EXPECTED_STATE_DECISION_REQUIRED",
