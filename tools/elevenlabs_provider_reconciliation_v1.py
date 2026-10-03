@@ -665,6 +665,17 @@ def build_sanitized_plan(
             },
             {
                 "order": 2,
+                "method": "GET",
+                "endpoint": "/v1/convai/agents/{agent_id}/branches/{isolated_branch_id}",
+                "purpose": "verify isolated provider branch before Procedure mutation",
+                "expected_safe": {
+                    "parent_branch_id_sha256": safe_id_fingerprint(raw["main_branch_id"]),
+                    "current_live_percentage": 0,
+                },
+                "approval_gate": "READ_ONLY",
+            },
+            {
+                "order": 3,
                 "method": "POST",
                 "endpoint": "/v1/convai/agents/{agent_id}/branches/{isolated_branch_id}/procedures",
                 "purpose": "create replacement structured Operator breakdown",
@@ -679,7 +690,7 @@ def build_sanitized_plan(
                 "approval_gate": "EXACT_WRITE_SET_APPROVAL_REQUIRED",
             },
             {
-                "order": 3,
+                "order": 4,
                 "method": "PATCH",
                 "endpoint": "/v1/convai/agents/{agent_id}/branches/{isolated_branch_id}/procedures/{procedure_id}/draft",
                 "purpose": "restore Technician pre-close draft",
@@ -695,7 +706,7 @@ def build_sanitized_plan(
                 "approval_gate": "EXACT_WRITE_SET_APPROVAL_REQUIRED",
             },
             {
-                "order": 4,
+                "order": 5,
                 "method": "PATCH",
                 "endpoint": "/v1/convai/agents/{agent_id}?branch_id={isolated_branch_id}",
                 "purpose": "publish isolated Procedure drafts so current version_ids can be read",
@@ -706,14 +717,14 @@ def build_sanitized_plan(
                 "approval_gate": "EXACT_WRITE_SET_APPROVAL_REQUIRED",
             },
             {
-                "order": 5,
+                "order": 6,
                 "method": "GET",
                 "endpoint": "/v1/convai/agents/{agent_id}/branches/{isolated_branch_id}/procedures",
                 "purpose": "resolve isolated Procedure version refs and verify hashes",
                 "approval_gate": "READ_ONLY",
             },
             {
-                "order": 6,
+                "order": 7,
                 "method": "PATCH",
                 "endpoint": "/v1/convai/agents/{agent_id}?branch_id={isolated_branch_id}",
                 "purpose": "publish exact reconciled isolated branch configuration",
@@ -732,17 +743,24 @@ def build_sanitized_plan(
                 "approval_gate": "EXACT_WRITE_SET_APPROVAL_REQUIRED",
             },
             {
-                "order": 7,
+                "order": 8,
                 "method": "GET",
                 "endpoint": "/v1/convai/agents/{agent_id}/branches/{source_branch_id}/merge-preview",
                 "purpose": "preview isolated branch merge into Main and inspect conflicts",
+                "query_safe": {
+                    "target_branch_id_sha256": safe_id_fingerprint(raw["main_branch_id"]),
+                    "force": False,
+                },
                 "approval_gate": "READ_ONLY",
             },
             {
-                "order": 8,
+                "order": 9,
                 "method": "POST",
                 "endpoint": "/v1/convai/agents/{agent_id}/branches/{source_branch_id}/merge",
                 "purpose": "merge reconciled provider branch into Main",
+                "query_safe": {
+                    "target_branch_id_sha256": safe_id_fingerprint(raw["main_branch_id"]),
+                },
                 "body_safe": {"archive_source_branch": True, "force": False},
                 "approval_gate": "SEPARATE_PROVIDER_MAIN_MERGE_APPROVAL_REQUIRED",
             },
