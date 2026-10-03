@@ -344,6 +344,8 @@ voice = exact Eric identity
 procedures = exact two resolved Procedure version refs
 ```
 
+This PATCH has its own authorization boundary because the exact Procedure version refs do not exist until Operation 6 has completed and been verified.
+
 The resulting effective Procedure set must contain exactly:
 
 ```text
@@ -482,17 +484,46 @@ After execution:
 4. record safe evidence on #34;
 5. STOP.
 
-## 12. Mandatory decision boundary
+## 12. Mandatory decision boundaries
 
 Phase A stops after the exact sanitized plan is produced.
 
-Before any provider mutation:
+### Boundary A — isolated staging writes
+
+Before creating the isolated provider branch or mutating Procedures:
 
 ```text
-Albert must explicitly approve the exact write-set
+Albert must explicitly approve the exact staging write-set
 ```
 
-After isolated-branch staging and GET merge-preview:
+This approval covers only:
+
+- create isolated provider branch;
+- create replacement deterministic Operator breakdown on that branch;
+- update Technician pre-close draft on that branch;
+- publish those staged Procedure drafts on that branch so version refs exist.
+
+It does not authorize the final reconciled branch configuration.
+
+### Boundary B — final isolated configuration
+
+After staging is published, GET-read the exact Procedure IDs/version IDs and verify hashes.
+
+Only then can the exact final agent PATCH be constructed.
+
+Before that PATCH:
+
+```text
+Albert must separately approve the exact final isolated-branch config write-set
+```
+
+The approval must be based on sanitized fingerprints of the resolved Procedure ID/version-ref pairs.
+
+### Boundary C — provider Main merge
+
+After the final isolated configuration is published, obtain GET merge-preview against exact Main with `force=false`.
+
+Then:
 
 ```text
 Albert must separately authorize merge into provider Main
