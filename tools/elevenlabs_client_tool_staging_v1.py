@@ -40,7 +40,7 @@ ISSUE = 38
 AGENT_NAME = "AI Control"
 STAGING_BRANCH_NAME = "bodyshop-client-tool-issue-38"
 STAGING_DESCRIPTION = "BODYSHOP #38 isolated Client Tool + operator contract staging"
-VERSION_DESCRIPTION = "BODYSHOP #38 stage confirmed-intake Client Tool + operator contract"
+TOOL_ATTACH_VERSION_DESCRIPTION = "BODYSHOP #38 attach confirmed-intake Client Tool on isolated branch"\nOPERATOR_VERSION_DESCRIPTION = "BODYSHOP #38 publish aligned Operator breakdown on isolated branch"
 
 BASELINE = {
     "agent_id_sha256": "b9849ffbf0f27a2f16dca71dcf8adce41c0f7e6d09c27a9934fcdf7747d3789d",
@@ -751,20 +751,13 @@ def execute_isolated_staging(
     if not isinstance(operator_pid, str) or not operator_pid:
         raise StagingError("Inherited Operator breakdown omitted procedure_id")
 
-    materialized = materialize_operator(expected, tool_id)
-    bid = safe_identifier(branch_id, "branch_id")
-    opid = safe_identifier(operator_pid, "operator_procedure_id")
-    client.patch(
-        f"/v1/convai/agents/{aid}/branches/{bid}/procedures/{opid}/draft",
-        materialized,
-    )
-
+    # Attach the Client Tool first and verify that isolated branch version.
     branch_agent = client.get_agent(agent_id, branch_id)
     cfg = branch_agent.get("conversation_config")
     if not isinstance(cfg, dict):
         raise StagingError("Isolated conversation_config is malformed")
-    target_cfg = copy.deepcopy(cfg)
-    agent_cfg = target_cfg.get("agent")
+    tool_cfg = copy.deepcopy(cfg)
+    agent_cfg = tool_cfg.get("agent")
     if not isinstance(agent_cfg, dict):
         raise StagingError("Isolated conversation_config.agent is malformed")
     prompt_cfg = agent_cfg.get("prompt")
@@ -777,17 +770,45 @@ def execute_isolated_staging(
         raise StagingError("Isolated branch unexpectedly inherited tool ids")
     prompt_cfg["tool_ids"] = [tool_id]
 
+    attached = client.patch(
+        f"/v1/convai/agents/{aid}",
+        {
+            "conversation_config": tool_cfg,
+            "version_description": TOOL_ATTACH_VERSION_DESCRIPTION,
+        },
+        {"branch_id": branch_id},
+    )
+    attached_version_id = attached.get("version_id")
+    if not isinstance(attached_version_id, str) or not attached_version_id:
+        raise StagingError("Tool-attach response omitted version_id")
+    attached_agent = client.get_agent(agent_id, branch_id)
+    attached_prompt = (
+        attached_agent.get("conversation_config", {})
+        .get("agent", {})
+        .get("prompt", {})
+    )
+    if not isinstance(attached_prompt, dict) or attached_prompt.get("tool_ids") != [tool_id]:
+        raise StagingError("Client Tool was not attached exactly before Procedure staging")
+
+    # Only after tool attachment is visible do we create the Procedure draft that references it.
+    materialized = materialize_operator(expected, tool_id)
+    bid = safe_identifier(branch_id, "branch_id")
+    opid = safe_identifier(operator_pid, "operator_procedure_id")
+    client.patch(
+        f"/v1/convai/agents/{aid}/branches/{bid}/procedures/{opid}/draft",
+        materialized,
+    )
+
     published = client.patch(
         f"/v1/convai/agents/{aid}",
         {
-            "conversation_config": target_cfg,
-            "version_description": VERSION_DESCRIPTION,
+            "version_description": OPERATOR_VERSION_DESCRIPTION,
         },
         {"branch_id": branch_id},
     )
     staged_version_id = published.get("version_id")
     if not isinstance(staged_version_id, str) or not staged_version_id:
-        raise StagingError("Publish response omitted version_id")
+        raise StagingError("Operator publish response omitted version_id")
 
     isolated_safe = verify_isolated_final(
         client,
