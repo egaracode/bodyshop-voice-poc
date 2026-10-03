@@ -171,6 +171,13 @@ class GateBUnitTests(unittest.TestCase):
                 {"op_RAW": "opv_RAW", "tech_RAW": "techv_RAW"},
             )
 
+    def test_gate_b_payload_includes_procedure_id_and_version_id(self):
+        source = (TOOLS / "elevenlabs_provider_final_config_v1.py").read_text(
+            encoding="utf-8"
+        )
+        self.assertIn('"procedure_id": pid', source)
+        self.assertIn('"version_id": vid', source)
+
     def test_evidence_contract_declares_main_unmodified_and_next_gate(self):
         source = (TOOLS / "elevenlabs_provider_final_config_v1.py").read_text(
             encoding="utf-8"
