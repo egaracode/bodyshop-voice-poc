@@ -661,7 +661,7 @@ def build_sanitized_plan(
                     "description": "BODYSHOP #34 isolated A5 reconciliation staging",
                     "include_draft": False,
                 },
-                "approval_gate": "EXACT_WRITE_SET_APPROVAL_REQUIRED",
+                "approval_gate": "STAGING_WRITE_SET_APPROVAL_REQUIRED",
             },
             {
                 "order": 2,
@@ -687,7 +687,7 @@ def build_sanitized_plan(
                     "content_sha256": operator_target["content_sha256"],
                     "content_length": operator_target["content_length"],
                 },
-                "approval_gate": "EXACT_WRITE_SET_APPROVAL_REQUIRED",
+                "approval_gate": "STAGING_WRITE_SET_APPROVAL_REQUIRED",
             },
             {
                 "order": 4,
@@ -703,7 +703,7 @@ def build_sanitized_plan(
                     "content_sha256": tech_target["content_sha256"],
                     "content_length": tech_target["content_length"],
                 },
-                "approval_gate": "EXACT_WRITE_SET_APPROVAL_REQUIRED",
+                "approval_gate": "STAGING_WRITE_SET_APPROVAL_REQUIRED",
             },
             {
                 "order": 5,
@@ -714,7 +714,7 @@ def build_sanitized_plan(
                     "procedures": "OMITTED_TO_USE_UNPUBLISHED_DRAFTS",
                     "version_description": "BODYSHOP #34 stage Procedure versions",
                 },
-                "approval_gate": "EXACT_WRITE_SET_APPROVAL_REQUIRED",
+                "approval_gate": "STAGING_WRITE_SET_APPROVAL_REQUIRED",
             },
             {
                 "order": 6,
@@ -740,7 +740,7 @@ def build_sanitized_plan(
                     ],
                     "version_description": "BODYSHOP #34 reconcile ElevenLabs provider to A5",
                 },
-                "approval_gate": "EXACT_WRITE_SET_APPROVAL_REQUIRED",
+                "approval_gate": "FINAL_ISOLATED_CONFIG_APPROVAL_REQUIRED",
             },
             {
                 "order": 8,
@@ -768,6 +768,7 @@ def build_sanitized_plan(
         "prohibited": [
             "force provider branch merge",
             "provider Main mutation before merge approval",
+            "final isolated config PATCH before resolved Procedure refs are separately approved",
             "DELETE draft as committed Procedure removal",
             "raw API key in output",
             "raw provider IDs in output",
