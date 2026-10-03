@@ -175,6 +175,40 @@ class GateCUnitTests(unittest.TestCase):
             gate_c._find_isolated_branch(client, "agent_RAW", "main_RAW")["id"],
         )
 
+    def test_effective_target_allows_historical_procedure_identities(self):
+        target = {"placeholder": True}
+        agent = {"procedures": {"op_RAW": {}, "tech_RAW": {}}}
+        historical = [{}, {}, {}, {}]
+        refs = {"op_RAW": "opv_RAW", "tech_RAW": "techv_RAW"}
+        operator_fp = {"name": "Operator breakdown"}
+        technician_fp = {"name": "Technician pre-close"}
+
+        with mock.patch.object(
+            gate_c,
+            "_select_staged_refs",
+            return_value=(refs, operator_fp, technician_fp),
+        ) as select, mock.patch.object(
+            gate_c,
+            "_verify_final_readback",
+        ) as verify:
+            result = gate_c._verify_effective_target(
+                agent,
+                historical,
+                target,
+                "eric_RAW",
+            )
+
+        select.assert_called_once_with(historical, target)
+        verify.assert_called_once_with(agent, target, "eric_RAW", refs)
+        self.assertEqual((refs, operator_fp, technician_fp), result)
+
+    def test_source_does_not_require_historical_procedure_list_to_equal_two(self):
+        source = (TOOLS / "elevenlabs_provider_merge_v1.py").read_text(
+            encoding="utf-8"
+        )
+        self.assertNotIn("if len(source_procedures) != 2", source)
+        self.assertNotIn("if len(procedures) != 2", source)
+
     def test_source_file_pins_preview_and_merge_target_and_force_false(self):
         source = (TOOLS / "elevenlabs_provider_merge_v1.py").read_text(
             encoding="utf-8"
