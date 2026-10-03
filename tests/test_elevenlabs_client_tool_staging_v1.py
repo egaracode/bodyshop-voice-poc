@@ -264,9 +264,12 @@ class FakeProvider:
         if path.endswith(f"/agents/{self.agent_id}"):
             if query != {"branch_id": self.isolated_id}:
                 raise AssertionError(query)
-            self.isolated_tool_ids = list(
-                body["conversation_config"]["agent"]["prompt"]["tool_ids"]
-            )
+            if "conversation_config" in body:
+                self.isolated_tool_ids = list(
+                    body["conversation_config"]["agent"]["prompt"]["tool_ids"]
+                )
+                self.isolated_version = "isolated_tool_RAW"
+                return {"version_id": self.isolated_version}
             self.isolated_published = True
             self.isolated_version = "isolated_final_RAW"
             return {"version_id": self.isolated_version}
@@ -374,6 +377,7 @@ class Issue38StagingTests(unittest.TestCase):
             [
                 ("POST", f"/v1/convai/agents/{fake.agent_id}/branches"),
                 ("POST", "/v1/convai/tools"),
+                ("PATCH", f"/v1/convai/agents/{fake.agent_id}"),
                 (
                     "PATCH",
                     f"/v1/convai/agents/{fake.agent_id}/branches/{fake.isolated_id}/procedures/{fake.operator_id}/draft",
