@@ -51,7 +51,9 @@ https://elevenlabs.io/docs/api-reference/agents/branches/merge
 
 Relevant facts:
 
+- merge-preview is GET-only, requires explicit `target_branch_id`, and supports `force=false`;
 - POST is the actual branch-to-target merge boundary;
+- branch merge also requires explicit `target_branch_id`;
 - `force` defaults to false;
 - source archiving is independently controlled.
 
@@ -296,13 +298,22 @@ include_draft = false
 
 ### Operation 2
 
+GET the newly created isolated provider branch and verify before any Procedure mutation:
+
+```text
+parent branch = exact current Main branch
+current_live_percentage = 0
+```
+
+### Operation 3
+
 ```text
 POST create replacement Operator breakdown
 type = deterministic
 trigger/content = exact A5 values
 ```
 
-### Operation 3
+### Operation 4
 
 ```text
 PATCH existing Technician pre-close draft
@@ -310,7 +321,7 @@ type remains free_form
 trigger/content = exact A5 values
 ```
 
-### Operation 4
+### Operation 5
 
 ```text
 PATCH isolated agent branch
@@ -320,11 +331,11 @@ purpose = publish staged Procedure drafts and obtain branch version refs
 
 This intermediate state exists only on the isolated non-live provider branch.
 
-### Operation 5
+### Operation 6
 
 GET-read the isolated Procedure versions and verify their hashes.
 
-### Operation 6
+### Operation 7
 
 ```text
 PATCH isolated agent branch
@@ -340,9 +351,14 @@ Operator breakdown
 Technician pre-close
 ```
 
-### Operation 7
+### Operation 8
 
-GET merge-preview from the isolated provider branch into Main.
+GET merge-preview from the isolated provider branch into Main with explicit query controls:
+
+```text
+target_branch_id = exact Main branch
+force = false
+```
 
 Required result:
 
@@ -350,10 +366,11 @@ Required result:
 - no unreviewed conflict/override;
 - no unexpected Main movement.
 
-### Operation 8
+### Operation 9
 
 ```text
 POST merge isolated provider branch into Main
+target_branch_id = exact Main branch
 force = false
 archive_source_branch = true
 ```
