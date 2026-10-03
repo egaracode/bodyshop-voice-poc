@@ -194,6 +194,11 @@ class ClientToolContractV1Tests(unittest.TestCase):
             "tool_EXISTING_RAW",
         ):
             self.assertNotIn(forbidden, encoded)
+        self.assertIs(plan["operator_contract_gap"]["gate1_requires_workshop_context"], True)
+        self.assertIs(
+            plan["operator_contract_gap"]["current_a5_expected_operator_procedure_collects_workshop"],
+            False,
+        )
         self.assertEqual(
             "EXPECTED_STATE_DECISION_REQUIRED",
             plan["operator_contract_gap"]["classification"],
