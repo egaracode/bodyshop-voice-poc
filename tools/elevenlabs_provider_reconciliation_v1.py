@@ -80,6 +80,7 @@ CURRENT_PROVIDER_GUARD_V1 = {
             "content_sha256": "6f9e1adcb990b147684f9124e81f720b943102ea84fa3cf32a498efca0939053",
             "content_length": 1738,
             "has_draft": False,
+            "version_present": True,
             "procedure_id_sha256": "f069b7a92ad0cac0d3e8e496050f2b6122d04d27e0965688e84bf9f3d51bbd17",
         },
         {
@@ -91,6 +92,7 @@ CURRENT_PROVIDER_GUARD_V1 = {
             "content_sha256": "a349726ecd8842e212f78a959eebff984c46befc428a03c223c6ed3408b6f134",
             "content_length": 4997,
             "has_draft": False,
+            "version_present": True,
             "procedure_id_sha256": "b20798cbbad928db10c9326b6d8c44875efaac6d37959212777e22439bcc63e1",
         },
         {
@@ -102,6 +104,7 @@ CURRENT_PROVIDER_GUARD_V1 = {
             "content_sha256": "5f9ea898f4c6ad795aab241c1c6d223be35f4a0d6330c3abea7e00452dd5bd8f",
             "content_length": 1769,
             "has_draft": False,
+            "version_present": True,
             "procedure_id_sha256": "b9c3cc30919a66654bf3b5bfe0e458de8cfcc87b89171ba3cc431013dd23fe40",
         },
     ],
@@ -344,6 +347,7 @@ def collect_current_procedures(
                 "content_sha256": sha256_text(canonical_content),
                 "content_length": len(canonical_content),
                 "has_draft": bool(meta.get("has_draft", False)),
+                "version_present": bool(full.get("version_id") or meta.get("version_id")),
                 "procedure_id_sha256": safe_id_fingerprint(pid),
             }
         )
