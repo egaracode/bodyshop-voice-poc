@@ -1,0 +1,55 @@
+{
+  "tool_config": {
+    "type": "client",
+    "name": "bodyshop_resolve_confirmed_intake",
+    "description": "Call only after the operator has confirmed the complete BODYSHOP breakdown read-back. Send only confirmed values. If any required value is missing or uncertain, ask for clarification instead of calling this tool. The tool returns a BODYSHOP-owned canonical resolution or a fail-closed clarification result and never creates or mutates an operational breakdown.",
+    "expects_response": true,
+    "parameters": {
+      "type": "object",
+      "description": "Operator-confirmed breakdown intake. Do not invent, infer, or silently normalize missing operational values.",
+      "required": [
+        "workshop",
+        "model",
+        "installation",
+        "operation",
+        "device",
+        "description",
+        "line_stopped"
+      ],
+      "properties": {
+        "workshop": {
+          "type": "string",
+          "description": "Confirmed BODYSHOP workshop scope, code or canonical spoken value."
+        },
+        "model": {
+          "type": "string",
+          "description": "Confirmed vehicle/model context."
+        },
+        "installation": {
+          "type": "string",
+          "description": "Confirmed installation or local production area."
+        },
+        "operation": {
+          "type": "string",
+          "description": "Confirmed operation/station/process reference."
+        },
+        "device": {
+          "type": "string",
+          "description": "Confirmed affected physical device or element."
+        },
+        "subdevice": {
+          "type": "string",
+          "description": "Confirmed affected subdevice when applicable. Omit when no subdevice is applicable or known."
+        },
+        "description": {
+          "type": "string",
+          "description": "Confirmed observable symptom or breakdown description. A root-cause diagnosis is not required."
+        },
+        "line_stopped": {
+          "type": "boolean",
+          "description": "Confirmed answer to whether the production line is stopped."
+        }
+      }
+    }
+  }
+}
