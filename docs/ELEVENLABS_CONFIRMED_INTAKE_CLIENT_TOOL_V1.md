@@ -165,9 +165,9 @@ complete read-back
 → confirmed observation
 ```
 
-Vertical Goal #432 also requires `line_stopped` in the bounded operator intake.
+Vertical Goal #432 also requires trusted `workshop` context and `line_stopped` in the bounded operator intake.
 
-The current A5 expected System Prompt and `Operator breakdown` Procedure do not explicitly collect `line_stopped`, and the current Procedure does not explicitly perform the complete read-back/confirmation required by #433.
+The current A5 expected System Prompt and `Operator breakdown` Procedure do not explicitly collect `workshop` or `line_stopped`, no trusted browser/session workshop injection exists yet, and the current Procedure does not explicitly perform the complete read-back/confirmation required by #433.
 
 Therefore:
 
@@ -184,7 +184,7 @@ provider behavior delta
 
 This block does not silently rewrite A5.
 
-Before provider staging writes, Albert must decide whether to accept the required expected-state delta that makes the current operator flow collect `line_stopped`, perform the complete read-back, obtain explicit confirmation and then invoke the Client Tool.
+Before provider staging writes, Albert must decide whether to accept the required expected-state delta that makes the current operator flow obtain trusted `workshop` context (for this first slice, by asking when no trusted session value exists), collect `line_stopped`, perform the complete read-back, obtain explicit confirmation and then invoke the Client Tool.
 
 ## 10. Local validation
 
