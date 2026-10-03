@@ -135,7 +135,21 @@ def procedure_fingerprint(item: dict[str, Any]) -> dict[str, Any]:
     trigger = normalize_text(item.get("trigger", ""))
     if trigger is None:
         trigger = ""
-    shape, canonical_content = content_shape(item.get("content"))
+
+    raw_content = item.get("content")
+    shape, canonical_content = content_shape(raw_content)
+
+    # ElevenLabs may persist deterministic Procedure content with a duplicate
+    # root-level "trigger" alongside "steps". The trigger is already verified
+    # independently above, so remove only that provider-added duplicate before
+    # hashing the semantic structured content.
+    if raw_type == "deterministic" and shape == "JSON_STEPS":
+        parsed = json.loads(canonical_content)
+        if isinstance(parsed, dict) and set(parsed).issuperset({"steps"}):
+            parsed = dict(parsed)
+            parsed.pop("trigger", None)
+            canonical_content = canonical_json(parsed)
+
     return {
         "name": name,
         "raw_api_type": raw_type,
