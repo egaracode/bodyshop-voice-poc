@@ -78,7 +78,7 @@ model
 installation
 operation
 device
-subdevice? 
+subdevice?
 description
 line_stopped
 ```
