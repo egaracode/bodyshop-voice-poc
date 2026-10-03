@@ -242,6 +242,7 @@ The planner fails closed if any pinned item moves, including:
 - current exact Procedure set;
 - Procedure type/content-shape/trigger/content fingerprints;
 - Procedure identity fingerprints;
+- Procedure version-presence state;
 - draft state.
 
 A changed provider state is not automatically adopted.
