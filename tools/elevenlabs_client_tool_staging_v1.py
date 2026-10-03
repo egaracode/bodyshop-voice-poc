@@ -40,7 +40,8 @@ ISSUE = 38
 AGENT_NAME = "AI Control"
 STAGING_BRANCH_NAME = "bodyshop-client-tool-issue-38"
 STAGING_DESCRIPTION = "BODYSHOP #38 isolated Client Tool + operator contract staging"
-TOOL_ATTACH_VERSION_DESCRIPTION = "BODYSHOP #38 attach confirmed-intake Client Tool on isolated branch"\nOPERATOR_VERSION_DESCRIPTION = "BODYSHOP #38 publish aligned Operator breakdown on isolated branch"
+TOOL_ATTACH_VERSION_DESCRIPTION = "BODYSHOP #38 attach confirmed-intake Client Tool on isolated branch"
+OPERATOR_VERSION_DESCRIPTION = "BODYSHOP #38 publish aligned Operator breakdown on isolated branch"
 
 BASELINE = {
     "agent_id_sha256": "b9849ffbf0f27a2f16dca71dcf8adce41c0f7e6d09c27a9934fcdf7747d3789d",
