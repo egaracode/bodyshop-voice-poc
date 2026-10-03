@@ -142,6 +142,11 @@ class ReconciliationPlannerV1Tests(unittest.TestCase):
             list(range(1, 9)),
             [item["order"] for item in plan["planned_operations"]],
         )
+        create_branch = plan["planned_operations"][0]
+        self.assertEqual(
+            "BODYSHOP #34 isolated A5 reconciliation staging",
+            create_branch["body_safe"]["description"],
+        )
         encoded = json.dumps(plan, ensure_ascii=False)
         for forbidden in (
             "agent_SECRET_RAW",
