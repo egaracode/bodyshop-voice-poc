@@ -289,6 +289,8 @@ When all GET-only guards pass, the planner describes this ordered future sequenc
 ```text
 POST create isolated provider branch
 parent = exact current Main version
+name = bodyshop-a5-reconcile-issue-34
+description = BODYSHOP #34 isolated A5 reconciliation staging
 include_draft = false
 ```
 
