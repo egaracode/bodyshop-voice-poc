@@ -80,6 +80,12 @@ class ReconciliationPlannerV1Tests(unittest.TestCase):
         with self.assertRaises(v1.PlannerError):
             v1.assert_current_provider_guard(moved)
 
+    def test_missing_procedure_version_fails_closed(self):
+        moved = json.loads(json.dumps(v1.CURRENT_PROVIDER_GUARD_V1))
+        moved["procedures"][0]["version_present"] = False
+        with self.assertRaises(v1.PlannerError):
+            v1.assert_current_provider_guard(moved)
+
     def test_existing_provider_branch_name_fails_closed(self):
         client = FakeBranchClient(["Main", "bodyshop-a5-reconcile-issue-34"])
         with self.assertRaises(v1.PlannerError):
