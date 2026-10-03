@@ -125,6 +125,26 @@ def _verify_preview(
     _verify_final_readback(preview, target, target_voice_id, selected_refs)
 
 
+def _verify_effective_target(
+    agent: dict[str, Any],
+    all_branch_procedures: list[dict[str, Any]],
+    target: dict[str, Any],
+    target_voice_id: str,
+) -> tuple[dict[str, str], dict[str, Any], dict[str, Any]]:
+    """Verify effective two-Procedure config while allowing historical Procedure identities."""
+    selected_refs, operator_fp, technician_fp = _select_staged_refs(
+        all_branch_procedures,
+        target,
+    )
+    _verify_final_readback(
+        agent,
+        target,
+        target_voice_id,
+        selected_refs,
+    )
+    return selected_refs, operator_fp, technician_fp
+
+
 def _verify_post_merge_main(
     client: ApiClient,
     expected: dict[str, Any],
@@ -178,19 +198,12 @@ def _verify_post_merge_main(
         raise ProviderMergeError("Post-merge voice identity mismatch")
 
     procedures = _get_branch_procedures(client, agent_id, main_branch_id)
-    if len(procedures) != 2:
-        raise ProviderMergeError("Post-merge Main does not contain exactly two Procedures")
-
-    by_name = {item.get("name"): item for item in procedures}
-    if set(by_name) != {"Operator breakdown", "Technician pre-close"}:
-        raise ProviderMergeError("Post-merge Main Procedure names mismatch")
-
-    operator_fp = procedure_fingerprint(by_name["Operator breakdown"])
-    technician_fp = procedure_fingerprint(by_name["Technician pre-close"])
-    if operator_fp != expected_procedure_fingerprint(target, "Operator breakdown"):
-        raise ProviderMergeError("Post-merge Operator breakdown fingerprint mismatch")
-    if technician_fp != expected_procedure_fingerprint(target, "Technician pre-close"):
-        raise ProviderMergeError("Post-merge Technician pre-close fingerprint mismatch")
+    selected_refs, operator_fp, technician_fp = _verify_effective_target(
+        agent,
+        procedures,
+        target,
+        target_voice_id,
+    )
 
     snapshot = compat_v2.collect_provider_snapshot(
         compat_v2.ApiClient(client.api_key, client.base_url),
@@ -293,19 +306,13 @@ def execute_provider_merge(
 
     source_agent = _get_branch_agent(read_client, agent_id, source_branch_id)
     source_procedures = _get_branch_procedures(read_client, agent_id, source_branch_id)
-    selected_refs, operator_fp, technician_fp = _select_staged_refs(
-        source_procedures, target
-    )
-    if len(source_procedures) != 2:
-        raise ProviderMergeError("Isolated branch does not contain exactly two Procedures")
-
     voice = resolve_target_voice(read_client)
     target_voice_id = voice["raw_voice_id"]
-    _verify_final_readback(
+    selected_refs, operator_fp, technician_fp = _verify_effective_target(
         source_agent,
+        source_procedures,
         target,
         target_voice_id,
-        selected_refs,
     )
 
     aid = safe_identifier(agent_id, "agent_id")
