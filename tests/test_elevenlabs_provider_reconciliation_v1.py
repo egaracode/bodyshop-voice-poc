@@ -139,7 +139,7 @@ class ReconciliationPlannerV1Tests(unittest.TestCase):
             live, target, target_voice, "bodyshop-a5-reconcile-issue-34"
         )
         self.assertEqual(
-            list(range(1, 9)),
+            list(range(1, 10)),
             [item["order"] for item in plan["planned_operations"]],
         )
         create_branch = plan["planned_operations"][0]
@@ -147,6 +147,19 @@ class ReconciliationPlannerV1Tests(unittest.TestCase):
             "BODYSHOP #34 isolated A5 reconciliation staging",
             create_branch["body_safe"]["description"],
         )
+        verify_branch = plan["planned_operations"][1]
+        self.assertEqual("GET", verify_branch["method"])
+        self.assertEqual(0, verify_branch["expected_safe"]["current_live_percentage"])
+        self.assertEqual(
+            v1.sha256_text("mainbranch_SECRET_RAW"),
+            verify_branch["expected_safe"]["parent_branch_id_sha256"],
+        )
+        preview = plan["planned_operations"][-2]
+        merge = plan["planned_operations"][-1]
+        expected_target = v1.sha256_text("mainbranch_SECRET_RAW")
+        self.assertEqual(expected_target, preview["query_safe"]["target_branch_id_sha256"])
+        self.assertFalse(preview["query_safe"]["force"])
+        self.assertEqual(expected_target, merge["query_safe"]["target_branch_id_sha256"])
         encoded = json.dumps(plan, ensure_ascii=False)
         for forbidden in (
             "agent_SECRET_RAW",
@@ -212,13 +225,24 @@ class ReconciliationPlannerV1Tests(unittest.TestCase):
             },
         }
         plan = v1.build_sanitized_plan(live, target, target_voice, "isolated")
+        preview = plan["planned_operations"][-2]
         merge = plan["planned_operations"][-1]
+        self.assertEqual("GET", preview["method"])
         self.assertEqual("POST", merge["method"])
         self.assertEqual(
             "SEPARATE_PROVIDER_MAIN_MERGE_APPROVAL_REQUIRED",
             merge["approval_gate"],
         )
+        self.assertFalse(preview["query_safe"]["force"])
         self.assertFalse(merge["body_safe"]["force"])
+        self.assertEqual(
+            v1.sha256_text("mainbranch_RAW"),
+            preview["query_safe"]["target_branch_id_sha256"],
+        )
+        self.assertEqual(
+            v1.sha256_text("mainbranch_RAW"),
+            merge["query_safe"]["target_branch_id_sha256"],
+        )
 
     def test_api_client_is_get_only(self):
         method_names = {
