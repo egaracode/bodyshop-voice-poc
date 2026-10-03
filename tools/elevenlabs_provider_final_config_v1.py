@@ -261,7 +261,10 @@ def execute_final_config(
             "conversation_config": target_cfg,
             "version_description": VERSION_DESCRIPTION,
             "procedures": {
-                pid: {"version_id": vid}
+                pid: {
+                    "procedure_id": pid,
+                    "version_id": vid,
+                }
                 for pid, vid in selected_refs.items()
             },
         },
