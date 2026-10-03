@@ -122,6 +122,26 @@ class StagingUnitTests(unittest.TestCase):
         self.assertEqual("free_form", fp["raw_api_type"])
         self.assertEqual("TEXT", fp["content_shape"])
 
+    def test_deterministic_fingerprint_ignores_provider_duplicate_root_trigger(self):
+        expected = load_expected()
+        by_name = {item["name"]: item for item in expected["procedures"]}
+        operator = by_name["Operator breakdown"]
+        provider_content = {
+            "steps": operator["content"]["steps"],
+            "trigger": operator["trigger"],
+        }
+        item = {
+            "name": "Operator breakdown",
+            "type": "deterministic",
+            "trigger": operator["trigger"],
+            "content": planner.canonical_json(provider_content),
+            "version_id": "provider_version_RAW",
+        }
+        actual = staging.procedure_fingerprint(item)
+        target = planner.derive_expected_target(expected)
+        wanted = staging.expected_procedure_fingerprint(target, "Operator breakdown")
+        self.assertEqual(wanted, actual)
+
     def test_staging_constants_pin_gate_a_scope(self):
         self.assertEqual(
             "bodyshop-a5-reconcile-issue-34", staging.STAGING_BRANCH_NAME
