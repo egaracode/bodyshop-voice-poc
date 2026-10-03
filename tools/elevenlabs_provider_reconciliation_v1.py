@@ -658,6 +658,7 @@ def build_sanitized_plan(
                 "body_safe": {
                     "parent_version_id_sha256": safe_id_fingerprint(raw["version_id"]),
                     "name": provider_branch_name,
+                    "description": "BODYSHOP #34 isolated A5 reconciliation staging",
                     "include_draft": False,
                 },
                 "approval_gate": "EXACT_WRITE_SET_APPROVAL_REQUIRED",
