@@ -106,6 +106,47 @@ class MergeUnitTests(unittest.TestCase):
         with self.assertRaises(gate2.ProviderMainMergeError):
             gate2._verify_preview(preview, source)
 
+    def test_preflight_requires_exact_compiled_artifact_classification(self):
+        resolved = {
+            "classification": "EXPECTED_PROVIDER_COMPILED_ARTIFACTS_ONLY",
+            "provider_main_write_performed": False,
+            "prompt_tool_expected_subset_diff": [],
+            "conversation_config_residual_diff_after_tool_materialization_normalization": [],
+            "workflow_diff_only_in_operator_compiled_namespace": True,
+            "workflow_diff_touches_technician_namespace": False,
+            "platform_settings_diff": [],
+            "main_branch_id_sha256": "m",
+            "source_branch_id_sha256": "s",
+            "tool_id_sha256": "t",
+            "operator_procedure_id_sha256": "o",
+            "technician_procedure_id_sha256": "p",
+            "source_prompt_tools_count": 1,
+            "workflow_diff_count": 58,
+        }
+        unresolved = copy.deepcopy(resolved)
+        unresolved["classification"] = "UNRESOLVED_PROVIDER_DELTA"
+
+        with mock.patch.object(gate2.classifier, "collect", return_value=unresolved):
+            with self.assertRaises(gate2.ProviderMainMergeError):
+                gate2._preflight(mock.Mock(), {}, {})
+
+    def test_compiled_artifact_state_is_part_of_preflight_signature(self):
+        value = {
+            "safe": {
+                "source_version_id_sha256": "a",
+                "compiled_artifacts": {
+                    "classification": "EXPECTED_PROVIDER_COMPILED_ARTIFACTS_ONLY",
+                    "workflow_diff_count": 58,
+                },
+            }
+        }
+        moved = copy.deepcopy(value)
+        moved["safe"]["compiled_artifacts"]["workflow_diff_count"] = 59
+        self.assertNotEqual(
+            gate2._preflight_signature(value),
+            gate2._preflight_signature(moved),
+        )
+
     def test_preflight_signature_changes_on_safe_state_movement(self):
         value = {"safe": {"source_version_id_sha256": "a", "commits_ahead": 3}}
         moved = {"safe": {"source_version_id_sha256": "b", "commits_ahead": 4}}
