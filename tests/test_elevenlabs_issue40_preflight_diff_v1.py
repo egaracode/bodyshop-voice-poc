@@ -24,6 +24,12 @@ class Issue40PreflightDiffTests(unittest.TestCase):
         with self.assertRaises(probe.DiagnosticError):
             client._request("DELETE", "/x")
 
+    def test_sanitize_path_hashes_raw_procedure_ids(self):
+        raw = "$.workflow.nodes.__xi_procedure__agtprc_example123/ask_1"
+        safe = probe.sanitize_path(raw)
+        self.assertNotIn("agtprc_example123", safe)
+        self.assertIn("__xi_procedure__agtprc_sha256_", safe)
+
     def test_structural_diff_reports_extra_field_without_raw_string(self):
         diff = probe.structural_diff(
             {"agent": {"prompt": {"tool_ids": []}}},
