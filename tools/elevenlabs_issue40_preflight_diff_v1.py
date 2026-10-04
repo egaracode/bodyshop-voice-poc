@@ -10,6 +10,7 @@ import argparse
 import copy
 import json
 import os
+import re
 import sys
 from typing import Any
 
@@ -33,6 +34,16 @@ class ReadOnlyClient(staging.ProviderClient):
         if method != "GET":
             raise DiagnosticError(f"GET-only diagnostic rejected method {method}")
         return super()._request(method, path, body=None, query=query)
+
+
+RAW_PROCEDURE_ID = re.compile(r"agtprc_[A-Za-z0-9]+")
+
+
+def sanitize_path(path: str) -> str:
+    return RAW_PROCEDURE_ID.sub(
+        lambda match: "agtprc_sha256_" + staging.sha256_text(match.group(0))[:12],
+        path,
+    )
 
 
 def safe_summary(value: Any) -> dict[str, Any]:
@@ -62,13 +73,13 @@ def structural_diff(main: Any, source: Any, path: str = "$") -> list[dict[str, A
             child = f"{path}.{key}"
             if key not in main:
                 out.append({
-                    "path": child,
+                    "path": sanitize_path(child),
                     "kind": "SOURCE_EXTRA_FIELD",
                     "source": safe_summary(source[key]),
                 })
             elif key not in source:
                 out.append({
-                    "path": child,
+                    "path": sanitize_path(child),
                     "kind": "SOURCE_MISSING_FIELD",
                     "main": safe_summary(main[key]),
                 })
@@ -79,7 +90,7 @@ def structural_diff(main: Any, source: Any, path: str = "$") -> list[dict[str, A
     if isinstance(main, list) and isinstance(source, list):
         if len(main) != len(source):
             return [{
-                "path": path,
+                "path": sanitize_path(path),
                 "kind": "LIST_LENGTH_MISMATCH",
                 "main": safe_summary(main),
                 "source": safe_summary(source),
@@ -91,7 +102,7 @@ def structural_diff(main: Any, source: Any, path: str = "$") -> list[dict[str, A
 
     if type(main) is not type(source):
         return [{
-            "path": path,
+            "path": sanitize_path(path),
             "kind": "TYPE_MISMATCH",
             "main": safe_summary(main),
             "source": safe_summary(source),
@@ -99,7 +110,7 @@ def structural_diff(main: Any, source: Any, path: str = "$") -> list[dict[str, A
 
     if main != source:
         return [{
-            "path": path,
+            "path": sanitize_path(path),
             "kind": "VALUE_MISMATCH",
             "main": safe_summary(main),
             "source": safe_summary(source),
