@@ -88,6 +88,44 @@ def _effective_tool_ids(agent: dict[str, Any]) -> list[str]:
     return tool_ids
 
 
+def _verify_compiled_artifact_classification(
+    compiled: dict[str, Any],
+) -> dict[str, Any]:
+    if compiled.get("classification") != "EXPECTED_PROVIDER_COMPILED_ARTIFACTS_ONLY":
+        raise ProviderMainMergeError(
+            "Source branch provider-compiled artifact classification is unresolved"
+        )
+    if compiled.get("provider_main_write_performed") is not False:
+        raise ProviderMainMergeError("Classifier reported an impossible provider Main write")
+    if compiled.get("prompt_tool_expected_subset_diff") != []:
+        raise ProviderMainMergeError("Materialized prompt.tools differs from expected Client Tool")
+    if compiled.get("conversation_config_residual_diff_after_tool_materialization_normalization") != []:
+        raise ProviderMainMergeError("Unexpected residual conversation_config differences remain")
+    if compiled.get("workflow_diff_only_in_operator_compiled_namespace") is not True:
+        raise ProviderMainMergeError("Workflow diff is not isolated to Operator compiled namespace")
+    if compiled.get("workflow_diff_touches_technician_namespace") is not False:
+        raise ProviderMainMergeError("Workflow diff touches Technician compiled namespace")
+    if compiled.get("platform_settings_diff") != []:
+        raise ProviderMainMergeError("Source branch contains unexpected platform_settings changes")
+
+    return {
+        "classification": compiled["classification"],
+        "main_branch_id_sha256": compiled.get("main_branch_id_sha256"),
+        "source_branch_id_sha256": compiled.get("source_branch_id_sha256"),
+        "tool_id_sha256": compiled.get("tool_id_sha256"),
+        "operator_procedure_id_sha256": compiled.get("operator_procedure_id_sha256"),
+        "technician_procedure_id_sha256": compiled.get("technician_procedure_id_sha256"),
+        "source_prompt_tools_count": compiled.get("source_prompt_tools_count"),
+        "workflow_diff_count": compiled.get("workflow_diff_count"),
+        "workflow_diff_only_in_operator_compiled_namespace": compiled.get(
+            "workflow_diff_only_in_operator_compiled_namespace"
+        ),
+        "workflow_diff_touches_technician_namespace": compiled.get(
+            "workflow_diff_touches_technician_namespace"
+        ),
+    }
+
+
 def _preflight(
     client: staging.ProviderClient,
     expected: dict[str, Any],
@@ -134,39 +172,7 @@ def _preflight(
         raise ProviderMainMergeError("Source branch does not contain exactly the Client Tool")
 
     compiled = classifier.collect(client, tool_payload, expected)
-    if compiled.get("classification") != "EXPECTED_PROVIDER_COMPILED_ARTIFACTS_ONLY":
-        raise ProviderMainMergeError(
-            "Source branch provider-compiled artifact classification is unresolved"
-        )
-    if compiled.get("provider_main_write_performed") is not False:
-        raise ProviderMainMergeError("Classifier reported an impossible provider Main write")
-    if compiled.get("prompt_tool_expected_subset_diff") != []:
-        raise ProviderMainMergeError("Materialized prompt.tools differs from expected Client Tool")
-    if compiled.get("conversation_config_residual_diff_after_tool_materialization_normalization") != []:
-        raise ProviderMainMergeError("Unexpected residual conversation_config differences remain")
-    if compiled.get("workflow_diff_only_in_operator_compiled_namespace") is not True:
-        raise ProviderMainMergeError("Workflow diff is not isolated to Operator compiled namespace")
-    if compiled.get("workflow_diff_touches_technician_namespace") is not False:
-        raise ProviderMainMergeError("Workflow diff touches Technician compiled namespace")
-    if compiled.get("platform_settings_diff") != []:
-        raise ProviderMainMergeError("Source branch contains unexpected platform_settings changes")
-
-    compiled_safe = {
-        "classification": compiled["classification"],
-        "main_branch_id_sha256": compiled.get("main_branch_id_sha256"),
-        "source_branch_id_sha256": compiled.get("source_branch_id_sha256"),
-        "tool_id_sha256": compiled.get("tool_id_sha256"),
-        "operator_procedure_id_sha256": compiled.get("operator_procedure_id_sha256"),
-        "technician_procedure_id_sha256": compiled.get("technician_procedure_id_sha256"),
-        "source_prompt_tools_count": compiled.get("source_prompt_tools_count"),
-        "workflow_diff_count": compiled.get("workflow_diff_count"),
-        "workflow_diff_only_in_operator_compiled_namespace": compiled.get(
-            "workflow_diff_only_in_operator_compiled_namespace"
-        ),
-        "workflow_diff_touches_technician_namespace": compiled.get(
-            "workflow_diff_touches_technician_namespace"
-        ),
-    }
+    compiled_safe = _verify_compiled_artifact_classification(compiled)
 
     return {
         "raw": {
