@@ -128,7 +128,43 @@ The source branch must contain exactly:
 
 The executor additionally proves that, after normalizing `tool_ids`, the source `conversation_config` equals Main and that `platform_settings` and `workflow` remain unchanged. This prevents unrelated source-branch changes from piggybacking on the merge.
 
-## 5. Merge preview gate
+## 5. Provider-compiled artifact classification
+
+The first live merge attempt correctly stopped in preflight before merge preview or POST because the source branch differed from Main in provider-generated fields.
+
+GET-only evidence then established the exact pattern:
+
+- Main `prompt.tool_ids=[]`;
+- source `prompt.tool_ids=[<verified Client Tool>]`;
+- Main `prompt.tools=[]`;
+- source `prompt.tools` contains exactly one provider-materialized Tool;
+- after normalizing only `tool_ids` and `tools`, no residual `conversation_config` differences remain;
+- `platform_settings` remains unchanged;
+- all Workflow differences are inside the exact compiled namespace of the aligned `Operator breakdown`;
+- no Workflow difference touches `Technician pre-close`;
+- the source Operator and Technician semantic fingerprints remain exact.
+
+This behavior is consistent with current ElevenLabs documentation: attached tools are materialized in agent prompt configuration, and publishing a Structured Procedure compiles the Procedure into read-only Workflow nodes.
+
+The merge executor therefore does not broadly ignore `workflow` or `prompt.tools`. It requires the separate GET-only classifier to return exactly:
+
+```text
+classification = EXPECTED_PROVIDER_COMPILED_ARTIFACTS_ONLY
+prompt_tool_expected_subset_diff = []
+conversation_config_residual_diff_after_tool_materialization_normalization = []
+workflow_diff_only_in_operator_compiled_namespace = true
+workflow_diff_touches_technician_namespace = false
+platform_settings_diff = []
+provider_main_write_performed = false
+```
+
+The classifier also verifies that the single materialized prompt Tool preserves every GitHub-owned expected Client Tool field and that the exact Operator/Technician Procedure fingerprints are still correct.
+
+The classifier's sanitized result is part of the preflight safe-state signature. If its fingerprints/counts/classification move between preview and POST, the merge is blocked.
+
+Any other provider delta remains fail-closed.
+
+## 6. Merge preview gate
 
 The preview is mandatory and GET-only.
 
@@ -145,7 +181,7 @@ If `platform_settings` or `workflow` are returned in the preview, they must equa
 
 After preview, the complete preflight is repeated. A safe-state fingerprint change blocks the merge before POST.
 
-## 6. Merge operation
+## 7. Merge operation
 
 Only after both preflights match:
 
@@ -159,7 +195,7 @@ No retry loop exists in the executor.
 
 If execution returns non-zero after the POST boundary, do not blindly rerun. Provider state must be inspected first.
 
-## 7. Post-merge readback
+## 8. Post-merge readback
 
 The executor requires provider Main to:
 
@@ -179,7 +215,7 @@ The source branch must then be:
 - archived;
 - 0% live.
 
-## 8. Sanitized evidence
+## 9. Sanitized evidence
 
 Output may contain:
 
@@ -203,7 +239,7 @@ Output must not contain:
 - raw Tool id;
 - System Prompt or Procedure body.
 
-## 9. Repository validation
+## 10. Repository validation
 
 Focused tests:
 
@@ -223,7 +259,7 @@ Diff:
 git diff --check
 ```
 
-## 10. Live execution
+## 11. Live execution
 
 Execute only from the exact CI-validated repository head and only with the API key in the local environment.
 
@@ -237,7 +273,7 @@ python tools/elevenlabs_gate2_provider_main_merge_v1.py \
 
 After execution, remove the API key from the environment.
 
-## 11. Residual runtime risk
+## 12. Residual runtime risk
 
 Provider configuration success does not prove real spoken tool behavior.
 
@@ -245,7 +281,7 @@ Structured Procedures remain Alpha and Qwen forced-tool behavior remains:
 
 `EVIDENCE_REQUIRED_IN_GATE_3`
 
-## 12. Explicit exclusions
+## 13. Explicit exclusions
 
 No:
 
@@ -261,7 +297,7 @@ No:
 - real conversation execution;
 - repository Ready/merge without Albert.
 
-## 13. Stop point
+## 14. Stop point
 
 After successful provider Main merge + exact post-merge readback:
 
