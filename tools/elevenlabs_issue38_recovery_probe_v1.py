@@ -168,7 +168,7 @@ def collect(client: ApiClient, expected_tool_payload: dict[str, Any]) -> dict[st
             "commits_ahead": branch.get("commits_ahead"),
             "commits_behind": branch.get("commits_behind"),
         }
-        isolated_safe = safe_agent(client.get_agent(agent_id, branch_id), tool_id)
+        isolated_agent = client._get(\n            f"/v1/convai/agents/{agent_id}",\n            {"branch_id": branch_id},\n        )\n        isolated_safe = safe_agent(isolated_agent, tool_id)
 
     expected_cfg = expected_tool_payload.get("tool_config")
     if not isinstance(expected_cfg, dict):
