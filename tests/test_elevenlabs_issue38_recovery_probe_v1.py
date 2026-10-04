@@ -25,6 +25,12 @@ class RecoveryProbeTests(unittest.TestCase):
         self.assertNotIn(".post(", source)
         self.assertNotIn(".patch(", source)
 
+    def test_isolated_agent_read_uses_get_branch_query(self):
+        source = PROBE_PATH.read_text(encoding="utf-8")
+        self.assertNotIn("get_agent(agent_id, branch_id)", source)
+        self.assertIn('{"branch_id": branch_id}', source)
+        self.assertIn('f"/v1/convai/agents/{agent_id}"', source)
+
     def test_schema_diff_reports_provider_extras_without_false_value_mismatch(self):
         expected = {
             "type": "object",
