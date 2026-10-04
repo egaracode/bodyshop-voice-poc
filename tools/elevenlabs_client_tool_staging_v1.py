@@ -489,6 +489,52 @@ def ensure_tool_name_available(client: ProviderClient) -> None:
         raise StagingError(f"Workspace already contains {matches} tool(s) named {TOOL_NAME!r}")
 
 
+def find_exact_existing_branch(
+    client: ProviderClient, agent_id: str
+) -> dict[str, Any]:
+    results = client.list_branches(agent_id, include_archived=True).get("results", [])
+    if not isinstance(results, list):
+        raise StagingError("Branch listing omitted results")
+    matches = [
+        item for item in results
+        if isinstance(item, dict) and item.get("name") == STAGING_BRANCH_NAME
+    ]
+    if len(matches) != 1:
+        raise StagingError(
+            f"Expected exactly one provider branch named {STAGING_BRANCH_NAME!r}; found {len(matches)}"
+        )
+    return matches[0]
+
+
+def find_exact_existing_tool(client: ProviderClient) -> dict[str, Any]:
+    cursor = None
+    matches: list[dict[str, Any]] = []
+    while True:
+        page = client.list_tools(TOOL_NAME, cursor)
+        tools = page.get("tools", [])
+        if not isinstance(tools, list):
+            raise StagingError("Tool listing omitted tools")
+        matches.extend(
+            item for item in tools
+            if isinstance(item, dict)
+            and isinstance(item.get("tool_config"), dict)
+            and item["tool_config"].get("name") == TOOL_NAME
+        )
+        if not page.get("has_more"):
+            break
+        cursor = page.get("next_cursor")
+        if not isinstance(cursor, str) or not cursor:
+            raise StagingError("Tool pagination omitted next_cursor")
+    if len(matches) != 1:
+        raise StagingError(
+            f"Expected exactly one workspace tool named {TOOL_NAME!r}; found {len(matches)}"
+        )
+    tool_id = matches[0].get("id")
+    if not isinstance(tool_id, str) or not tool_id:
+        raise StagingError("Existing Client Tool omitted id")
+    return client.get_tool(tool_id)
+
+
 def validate_expected_state(expected: dict[str, Any]) -> None:
     if expected.get("schema_version") != 1:
         raise StagingError("Expected-state schema_version must be 1")
@@ -547,16 +593,30 @@ def materialize_operator(expected: dict[str, Any], tool_id: str) -> dict[str, An
     }
 
 
+def _assert_expected_subset(expected: Any, actual: Any, path: str) -> None:
+    """Require every GitHub-owned expected value while allowing provider-added defaults."""
+    if isinstance(expected, dict):
+        if not isinstance(actual, dict):
+            raise StagingError(f"Tool readback shape mismatch at {path}")
+        for key, value in expected.items():
+            if key not in actual:
+                raise StagingError(f"Tool readback missing expected field {path}.{key}")
+            _assert_expected_subset(value, actual[key], f"{path}.{key}")
+        return
+    if isinstance(expected, list):
+        if actual != expected:
+            raise StagingError(f"Tool readback list mismatch at {path}")
+        return
+    if actual != expected:
+        raise StagingError(f"Tool readback value mismatch at {path}")
+
+
 def verify_tool_contract(actual: dict[str, Any], expected_payload: dict[str, Any]) -> None:
     actual_cfg = actual.get("tool_config")
     expected_cfg = expected_payload.get("tool_config")
     if not isinstance(actual_cfg, dict) or not isinstance(expected_cfg, dict):
         raise StagingError("Tool config readback is malformed")
-    for field in ("type", "name", "description", "expects_response"):
-        if actual_cfg.get(field) != expected_cfg.get(field):
-            raise StagingError(f"Tool readback mismatch for {field}")
-    if actual_cfg.get("parameters") != expected_cfg.get("parameters"):
-        raise StagingError("Tool parameter schema readback mismatch")
+    _assert_expected_subset(expected_cfg, actual_cfg, "tool_config")
 
 
 def _branch_parent_id(branch: dict[str, Any]) -> str | None:
@@ -851,17 +911,169 @@ def execute_isolated_staging(
     }
 
 
+def resume_existing_staging(
+    client: ProviderClient,
+    expected: dict[str, Any],
+    tool_payload: dict[str, Any],
+) -> dict[str, Any]:
+    """Resume only the exact partial state left by the first authorized #38 attempt."""
+    validate_expected_state(expected)
+    validate_tool_create_payload(tool_payload)
+
+    main_before = assert_main_baseline(client)
+    raw = main_before["raw"]
+    agent_id = raw["agent_id"]
+    main_branch_id = raw["main_branch_id"]
+
+    branch_meta = find_exact_existing_branch(client, agent_id)
+    branch_id = branch_meta.get("id")
+    if not isinstance(branch_id, str) or not branch_id:
+        raise StagingError("Existing isolated branch omitted id")
+    verify_isolated_branch(
+        client.get_branch(agent_id, branch_id),
+        main_branch_id=main_branch_id,
+    )
+    if bool(branch_meta.get("draft_exists", False)):
+        raise StagingError("Recovery requires no existing Procedure draft")
+    if branch_meta.get("commits_ahead") != 1:
+        raise StagingError("Recovery requires isolated branch commits_ahead=1")
+    if branch_meta.get("commits_behind") != 0:
+        raise StagingError("Recovery requires isolated branch commits_behind=0")
+
+    tool = find_exact_existing_tool(client)
+    tool_id = tool.get("id")
+    if not isinstance(tool_id, str) or not tool_id:
+        raise StagingError("Existing Client Tool omitted id")
+    verify_tool_contract(tool, tool_payload)
+
+    isolated_before = client.get_agent(agent_id, branch_id)
+    cfg = isolated_before.get("conversation_config")
+    if not isinstance(cfg, dict):
+        raise StagingError("Recovery isolated conversation_config is malformed")
+    agent_cfg = cfg.get("agent")
+    if not isinstance(agent_cfg, dict):
+        raise StagingError("Recovery isolated agent config is malformed")
+    prompt_cfg = agent_cfg.get("prompt")
+    if not isinstance(prompt_cfg, dict):
+        raise StagingError("Recovery isolated prompt config is malformed")
+    inherited_tool_ids = prompt_cfg.get("tool_ids", [])
+    if inherited_tool_ids is None:
+        inherited_tool_ids = []
+    if inherited_tool_ids != []:
+        raise StagingError("Recovery requires the Client Tool to be not yet attached")
+
+    operator_before = _procedure_by_name(
+        client, isolated_before, branch_id, "Operator breakdown"
+    )
+    technician_before = _procedure_by_name(
+        client, isolated_before, branch_id, "Technician pre-close"
+    )
+    if semantic_procedure_fingerprint(operator_before) != main_before["safe"]["operator"]:
+        raise StagingError("Recovery Operator baseline differs from Main")
+    if semantic_procedure_fingerprint(technician_before) != main_before["safe"]["technician"]:
+        raise StagingError("Recovery Technician baseline differs from Main")
+
+    operator_pid = operator_before.get("procedure_id")
+    if not isinstance(operator_pid, str) or not operator_pid:
+        raise StagingError("Recovery Operator breakdown omitted procedure_id")
+
+    aid = safe_identifier(agent_id, "agent_id")
+    tool_cfg = copy.deepcopy(cfg)
+    recovery_prompt = tool_cfg["agent"]["prompt"]
+    recovery_prompt["tool_ids"] = [tool_id]
+
+    attached = client.patch(
+        f"/v1/convai/agents/{aid}",
+        {
+            "conversation_config": tool_cfg,
+            "version_description": TOOL_ATTACH_VERSION_DESCRIPTION,
+        },
+        {"branch_id": branch_id},
+    )
+    attached_version_id = attached.get("version_id")
+    if not isinstance(attached_version_id, str) or not attached_version_id:
+        raise StagingError("Recovery tool-attach response omitted version_id")
+
+    attached_agent = client.get_agent(agent_id, branch_id)
+    attached_prompt = (
+        attached_agent.get("conversation_config", {})
+        .get("agent", {})
+        .get("prompt", {})
+    )
+    if not isinstance(attached_prompt, dict) or attached_prompt.get("tool_ids") != [tool_id]:
+        raise StagingError("Recovery Client Tool attachment readback mismatch")
+
+    materialized = materialize_operator(expected, tool_id)
+    bid = safe_identifier(branch_id, "branch_id")
+    opid = safe_identifier(operator_pid, "operator_procedure_id")
+    client.patch(
+        f"/v1/convai/agents/{aid}/branches/{bid}/procedures/{opid}/draft",
+        materialized,
+    )
+
+    published = client.patch(
+        f"/v1/convai/agents/{aid}",
+        {"version_description": OPERATOR_VERSION_DESCRIPTION},
+        {"branch_id": branch_id},
+    )
+    final_version_id = published.get("version_id")
+    if not isinstance(final_version_id, str) or not final_version_id:
+        raise StagingError("Recovery Operator publish response omitted version_id")
+
+    isolated_safe = verify_isolated_final(
+        client,
+        agent_id=agent_id,
+        branch_id=branch_id,
+        tool_id=tool_id,
+        tool_payload=tool_payload,
+        expected=expected,
+        baseline_technician=main_before["safe"]["technician"],
+    )
+
+    main_after = assert_main_baseline(client)
+    if main_after["safe"] != main_before["safe"]:
+        raise StagingError("Main safe snapshot changed during recovery")
+
+    return {
+        "schema_version": 1,
+        "mode": "GATE2_CLIENT_TOOL_ISOLATED_STAGING_RESUMED",
+        "provider": "ElevenLabs",
+        "issue": ISSUE,
+        "recovery_source": "BRANCH_AND_TOOL_CREATED_NOT_ATTACHED",
+        "source_main": main_before["safe"],
+        "isolated_branch": {
+            "name": STAGING_BRANCH_NAME,
+            "description": STAGING_DESCRIPTION,
+            "parent_main_branch_id_sha256": main_before["safe"]["main_branch_id_sha256"],
+            **isolated_safe,
+        },
+        "workspace_tool": {
+            "created_by_this_resume": False,
+            "reused_existing": True,
+            "name": TOOL_NAME,
+            "tool_id_sha256": isolated_safe["tool_id_sha256"],
+            "config_sha256": sha256_text(canonical_json(tool_payload)),
+        },
+        "provider_main_agent_modified": False,
+        "workspace_tool_created_by_resume": False,
+        "provider_main_merge_performed": False,
+        "runtime_risk": expected.get("runtime_risk"),
+        "next_gate": "REPOSITORY_READY_DECISION_AND_SEPARATE_PROVIDER_MAIN_MERGE_DECISION_REQUIRED",
+    }
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--expected", required=True)
     parser.add_argument("--tool-config", required=True)
     parser.add_argument("--output", required=True)
     parser.add_argument("--execute-isolated-staging", action="store_true")
+    parser.add_argument("--resume-existing-staging", action="store_true")
     args = parser.parse_args(argv)
 
-    if not args.execute_isolated_staging:
+    if args.execute_isolated_staging == args.resume_existing_staging:
         print(
-            "ERROR: --execute-isolated-staging is required; no provider write performed",
+            "ERROR: choose exactly one execution mode; no provider write performed",
             file=sys.stderr,
         )
         return 2
@@ -874,7 +1086,11 @@ def main(argv: list[str] | None = None) -> int:
     try:
         expected = load_object(args.expected)
         tool_payload = load_object(args.tool_config)
-        evidence = execute_isolated_staging(ProviderClient(key), expected, tool_payload)
+        client = ProviderClient(key)
+        if args.resume_existing_staging:
+            evidence = resume_existing_staging(client, expected, tool_payload)
+        else:
+            evidence = execute_isolated_staging(client, expected, tool_payload)
         encoded = json.dumps(evidence, ensure_ascii=False, indent=2)
         with open(args.output, "w", encoding="utf-8") as handle:
             handle.write(encoded)

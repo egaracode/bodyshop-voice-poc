@@ -186,6 +186,8 @@ class FakeProvider:
                     "draft_exists": bool(self.operator_draft and not self.isolated_published),
                     "current_live_percentage": 0,
                     "parent_branch_id": self.main_id,
+                    "commits_ahead": 1,
+                    "commits_behind": 0,
                 }
             )
         return {"results": values}
@@ -355,6 +357,83 @@ class Issue38StagingTests(unittest.TestCase):
         with self.assertRaises(staging.StagingError):
             staging.ensure_tool_name_available(fake)
 
+    def test_tool_verifier_accepts_provider_normalization_extras(self):
+        payload = load_json(TOOL_PATH)
+        actual = copy.deepcopy(payload)
+        actual["tool_config"]["execution_mode"] = "immediate"
+        actual["tool_config"]["parameters"]["dynamic_variable"] = ""
+        actual["tool_config"]["parameters"]["is_omitted"] = False
+        for node in actual["tool_config"]["parameters"]["properties"].values():
+            node["enum"] = None
+            node["is_system_provided"] = False
+            node["dynamic_variable"] = ""
+            node["allowed_values"] = None
+            node["allowed_values_dynamic_variable"] = ""
+            node["constant_value"] = ""
+            node["is_omitted"] = False
+        staging.verify_tool_contract(
+            {"id": "tool_RAW", "tool_config": actual["tool_config"]},
+            payload,
+        )
+
+    def test_tool_verifier_rejects_real_semantic_mismatch(self):
+        payload = load_json(TOOL_PATH)
+        actual = copy.deepcopy(payload)
+        actual["tool_config"]["parameters"]["properties"]["line_stopped"]["type"] = "string"
+        with self.assertRaises(staging.StagingError):
+            staging.verify_tool_contract(
+                {"id": "tool_RAW", "tool_config": actual["tool_config"]},
+                payload,
+            )
+
+    def test_resume_existing_partial_staging_reuses_resources_and_never_posts(self):
+        fake = FakeProvider()
+        fake.isolated_created = True
+        fake.tool_created = True
+        expected = load_json(EXPECTED_PATH)
+        payload = load_json(TOOL_PATH)
+
+        with self.patched_baseline(fake):
+            evidence = staging.resume_existing_staging(fake, expected, payload)
+
+        writes = [
+            (call[0], call[1])
+            for call in fake.calls
+            if call[0] in {"POST", "PATCH"}
+        ]
+        self.assertEqual(
+            [
+                ("PATCH", f"/v1/convai/agents/{fake.agent_id}"),
+                (
+                    "PATCH",
+                    f"/v1/convai/agents/{fake.agent_id}/branches/{fake.isolated_id}/procedures/{fake.operator_id}/draft",
+                ),
+                ("PATCH", f"/v1/convai/agents/{fake.agent_id}"),
+            ],
+            writes,
+        )
+        self.assertFalse(any(method == "POST" for method, _ in writes))
+        self.assertEqual(
+            "BRANCH_AND_TOOL_CREATED_NOT_ATTACHED",
+            evidence["recovery_source"],
+        )
+        self.assertTrue(evidence["workspace_tool"]["reused_existing"])
+        self.assertFalse(evidence["workspace_tool_created_by_resume"])
+        self.assertFalse(evidence["provider_main_agent_modified"])
+        self.assertFalse(evidence["provider_main_merge_performed"])
+
+    def test_resume_rejects_already_attached_tool(self):
+        fake = FakeProvider()
+        fake.isolated_created = True
+        fake.tool_created = True
+        fake.isolated_tool_ids = [fake.tool_id]
+        expected = load_json(EXPECTED_PATH)
+        payload = load_json(TOOL_PATH)
+
+        with self.patched_baseline(fake):
+            with self.assertRaises(staging.StagingError):
+                staging.resume_existing_staging(fake, expected, payload)
+
     def test_full_isolated_staging_sequence_is_verified_and_sanitized(self):
         fake = FakeProvider()
         expected = load_json(EXPECTED_PATH)
@@ -439,6 +518,26 @@ class Issue38StagingTests(unittest.TestCase):
         )
         self.assertEqual(2, rc)
         self.assertFalse(output.exists())
+
+    def test_execution_modes_are_mutually_exclusive(self):
+        output = ROOT / "never-created-issue38-both.json"
+        if output.exists():
+            output.unlink()
+        rc = staging.main(
+            [
+                "--expected",
+                str(EXPECTED_PATH),
+                "--tool-config",
+                str(TOOL_PATH),
+                "--output",
+                str(output),
+                "--execute-isolated-staging",
+                "--resume-existing-staging",
+            ]
+        )
+        self.assertEqual(2, rc)
+        self.assertFalse(output.exists())
+
 
 
 if __name__ == "__main__":

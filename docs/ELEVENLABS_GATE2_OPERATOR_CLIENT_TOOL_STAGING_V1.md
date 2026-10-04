@@ -303,7 +303,55 @@ python tools/elevenlabs_client_tool_staging_v1.py \
   --execute-isolated-staging
 ```
 
-## 13. Explicit exclusions
+## 13. Interrupted-write recovery contract
+
+The first authorized live staging attempt on 2026-10-04 stopped after provider Tool creation because the initial verifier compared the complete provider readback object byte-for-byte against the minimal GitHub Create Tool payload.
+
+GET-only recovery evidence then proved:
+
+- provider Main remained on the guarded A5 baseline and still had `tool_ids=[]`;
+- the isolated branch existed, remained 0% live, had no Procedure draft, was one commit ahead and zero behind Main;
+- the inherited Operator and Technician Procedures were still unchanged;
+- exactly one workspace Client Tool named `bodyshop_resolve_confirmed_intake` existed;
+- the Client Tool had not been attached to the isolated agent;
+- every schema difference was a provider-added field; no GitHub-owned expected value had a semantic mismatch.
+
+Current ElevenLabs Get Tool documentation returns provider-enriched Client Tool representations, including defaults and parameter metadata beyond the minimal create payload. Therefore readback validation now requires every GitHub-owned expected field/value recursively while allowing additional provider-owned fields.
+
+The original staging mode remains fail-closed when the branch/tool already exist and must not be rerun after this partial write.
+
+Recovery uses the separate flag:
+
+```text
+--resume-existing-staging
+```
+
+Before the first recovery PATCH it requires the exact observed partial state:
+
+```text
+Main = guarded baseline / tool_ids=[]
+isolated branch = exact name + parent / 0% live / no draft / ahead=1 / behind=0
+workspace tool = exactly one exact-name tool / expected semantic contract
+isolated tool_ids = []
+Operator Procedure = Main baseline
+Technician Procedure = Main baseline
+```
+
+Recovery then performs only:
+
+```text
+PATCH isolated agent: attach existing Tool
+→ GET verify exact attachment
+→ PATCH existing Operator Procedure draft
+→ PATCH isolated agent: publish draft
+→ GET full isolated readback
+→ GET exact Main guard
+→ STOP
+```
+
+It performs no POST and creates no replacement branch or replacement Tool.
+
+## 14. Explicit exclusions
 
 This block does not authorize:
 
@@ -321,7 +369,7 @@ This block does not authorize:
 - workflow/dependency changes;
 - Ready or repository merge without Albert.
 
-## 14. Stop point
+## 15. Stop point
 
 After successful isolated staging and GET readback:
 
