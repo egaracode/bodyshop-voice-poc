@@ -123,12 +123,22 @@ class MergeUnitTests(unittest.TestCase):
             "source_prompt_tools_count": 1,
             "workflow_diff_count": 58,
         }
-        unresolved = copy.deepcopy(resolved)
-        unresolved["classification"] = "UNRESOLVED_PROVIDER_DELTA"
+        safe = gate2._verify_compiled_artifact_classification(resolved)
+        self.assertEqual("EXPECTED_PROVIDER_COMPILED_ARTIFACTS_ONLY", safe["classification"])
+        self.assertEqual(58, safe["workflow_diff_count"])
 
-        with mock.patch.object(gate2.classifier, "collect", return_value=unresolved):
+        for field, bad_value in (
+            ("classification", "UNRESOLVED_PROVIDER_DELTA"),
+            ("prompt_tool_expected_subset_diff", [{"path": "$.x"}]),
+            ("conversation_config_residual_diff_after_tool_materialization_normalization", [{"path": "$.y"}]),
+            ("workflow_diff_only_in_operator_compiled_namespace", False),
+            ("workflow_diff_touches_technician_namespace", True),
+            ("platform_settings_diff", [{"path": "$.z"}]),
+        ):
+            moved = copy.deepcopy(resolved)
+            moved[field] = bad_value
             with self.assertRaises(gate2.ProviderMainMergeError):
-                gate2._preflight(mock.Mock(), {}, {})
+                gate2._verify_compiled_artifact_classification(moved)
 
     def test_compiled_artifact_state_is_part_of_preflight_signature(self):
         value = {
