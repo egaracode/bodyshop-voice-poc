@@ -1,3 +1,13 @@
+> **CURRENT AUTHORITY NOTICE — 2026-10-06**
+>
+> This document is preserved as **HISTORICAL / PROVENANCE** evidence and is **SUPERSEDED AS CURRENT PRODUCT/PROVIDER AUTHORITY**.
+>
+> Current BODYSHOP Voice product authority lives in `egaracode/AI-Control-Workshop`, including `docs/DATA_CONTRACTS/VOICE_OPERATOR_INTAKE_CONTRACT_V1.md` and its MASTER-owned executable/provider-derivation tooling.
+>
+> The historical body below is intentionally preserved unchanged. Any words such as `current`, `authority`, `accepted target`, `next candidate` or Gate status must be read in the delivery context recorded by this document. Revalidate live GitHub and current first-party provider documentation before reuse.
+>
+> Repository classification: see `docs/VOICE_AUTHORITY_STATUS_V1.md`.
+
 # Gate 2 — Operator expected-state alignment + Client Tool isolated staging V1
 
 ## 1. Status
