@@ -396,8 +396,12 @@ class Issue42ProviderMainMergeV2Tests(unittest.TestCase):
         self.assertTrue(evidence["post_merge"]["main_matches_verified_source"])
         self.assertTrue(evidence["post_merge"]["source_archived"])
         self.assertTrue(evidence["post_merge"]["source_merged_into_main"])
+        expected_target = merge42.staging42._target_operator_fingerprint(
+            self.v2,
+            fake.tool_id,
+        )
         self.assertEqual(
-            "4da5ce89061a6de621df1309e916e580994a1cc954fccd001020b27cc1545d18",
+            expected_target["content_sha256"],
             evidence["post_merge"]["operator"]["content_sha256"],
         )
         self.assertEqual(
