@@ -343,39 +343,92 @@ Main is re-read before and after preview and must remain the exact accepted
 Gate-2 baseline. The isolated branch is also re-read after preview and must
 remain unchanged.
 
-## 9. Exact stop for the current authorization
+## 9. Authorized provider Main merge executor
 
-Current authorization:
+After the isolated V2 branch was recovered and verified with zero live traffic,
+exact V2 Operator content, unchanged Technician/Tool/static state and a clean
+GET-only merge preview, Albert separately authorized one provider Main merge:
 
 ```text
-repository-side executor
-+ isolated provider branch at 0% live
-+ exact Operator V2 draft
-+ isolated publish
-+ exact readback
-+ GET merge-preview force=false
+source = bodyshop-workshop-installation-issue-42
+target = exact provider Main branch
+force = false
+archive_source_branch = true
+merge POST count = exactly one
+post-merge = GET-only readback
 ```
 
-Explicitly not authorized:
+The bounded executor is:
+
+`tools/elevenlabs_issue42_provider_main_merge_v2.py`
+
+Its mutation surface is narrower than the staging executor:
+
+- GET remains available for exact preflight, merge-preview and post-merge readback;
+- POST is allowed only for the exact branch merge endpoint;
+- the body must be exactly
+  `{"archive_source_branch": true, "force": false}`;
+- the query must contain only the exact Main `target_branch_id`;
+- a second merge POST in the same process is rejected;
+- POST branch creation is impossible;
+- PATCH/PUT/DELETE are impossible;
+- no Supabase, Production or BODYSHOP lifecycle operation exists.
+
+Immediately before the merge POST the executor revalidates:
+- exact Gate-2 provider Main V1 baseline;
+- exact named isolated source branch;
+- source live percentage = 0;
+- source unarchived and without draft;
+- source not behind Main and ahead by at least one published change;
+- exact V2 Operator fingerprint;
+- unchanged Technician fingerprint;
+- unchanged confirmed-intake Client Tool;
+- retained conversation/platform configuration;
+- compiled workflow movement only in the Operator namespace;
+- a fresh merge-preview with zero conflicts, zero overridden fields and exact
+  parity with the verified source;
+- `force=false`.
+
+The merge POST is counted before network I/O. A network-level outcome ambiguity
+or malformed success response is classified as uncertain and must never be
+blindly retried.
+
+Post-merge GET-only verification requires:
+- Main branch identity unchanged;
+- Main version advanced;
+- Main conversation configuration, platform settings, workflow and Procedures
+  exactly match the previously verified source;
+- Operator = exact V2 target;
+- Technician unchanged;
+- confirmed-intake Tool contract unchanged;
+- source branch archived;
+- source live percentage remains 0;
+- source has no draft;
+- source records exact Main as `merged_into_branch_id`;
+- provider Main remains unarchived and has no draft.
+
+## 10. Exact stop after provider Main merge
+
+Current authorization does **not** include repository Ready/merge or Gate-3
+runtime retry.
+
+Successful provider Main merge evidence must stop at:
 
 ```text
-provider Main merge
+STOP_FOR_POST_MERGE_AUDIT_AND_ALBERT_REPOSITORY_DECISION
+```
+
+Explicitly still not authorized:
+
+```text
 repository Ready
 repository merge
 Gate-3 conversation retry
 Supabase / SQL / RLS / RPC / Auth
 Production
-lifecycle mutation
+BODYSHOP lifecycle mutation
 ```
 
-Successful executor evidence must stop at:
-
-```text
-STOP_FOR_ALBERT_PROVIDER_MAIN_MERGE_AUTHORIZATION
-```
-
-No canonical-state update required.
-
-The correction does not change BODYSHOP architecture, catalog ownership,
-persistence, security boundary or domain authority. It only strengthens
-provider-side adherence to an already-canonical field separation.
+No canonical-state update required for the provider-semantic correction itself.
+The correction aligns ElevenLabs with an already-canonical BODYSHOP field
+boundary and does not change catalog ownership, persistence or domain authority.
