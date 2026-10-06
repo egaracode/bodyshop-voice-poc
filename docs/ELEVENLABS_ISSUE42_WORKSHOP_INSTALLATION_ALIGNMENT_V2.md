@@ -277,28 +277,105 @@ It must not contain raw:
 - Tool id;
 - API key.
 
-## 8. Exact stop for the current authorization
+## 8. Authorized isolated staging executor
 
-Albert authorized:
+After reviewing the GET-only sanitized write-set, Albert separately authorized
+provider operations 1–6 only:
 
 ```text
-GET-only diagnosis
-+ repository-side implementation
-+ Draft PR
-+ sanitized write-set
-WITHOUT provider write
+1. POST isolated branch from the exact accepted Main version
+2. GET branch verification
+3. PATCH only the Operator Procedure draft to V2
+4. PATCH the isolated branch agent to publish that draft
+5. GET exact isolated readback
+6. GET merge-preview into Main with force=false
 ```
 
-Therefore this candidate has no provider mutation command or execution flag.
+Provider Main merge remains explicitly unauthorized.
 
-After exact-head repository CI and GET-only live plan evidence:
+The bounded executor is:
+
+`tools/elevenlabs_issue42_provider_staging_v2.py`
+
+Its network surface is fail-closed:
+
+- GET for provider verification and merge-preview;
+- POST only for the exact branch-create endpoint;
+- PATCH only for the exact Operator Procedure draft endpoint and isolated
+  branch publication through Update Agent + `branch_id`;
+- no DELETE or PUT support;
+- no branch-merge mutation method;
+- no Production or Supabase operation.
+
+The executor requires `--execute-authorized-staging` and fails closed when
+that flag or `ELEVENLABS_API_KEY` is absent.
+
+Before the first write it re-runs the exact Gate-2 Main baseline guard. It also
+supports bounded recovery when the named zero-live staging branch already
+exists, but only when the branch is still tied to exact Main and its current
+Procedure state is either exact Gate-2 V1 or exact V2. Unexpected drafts,
+published content, parentage, live traffic or behind state stop execution.
+
+Post-publish verification requires:
+
+- branch live percentage = 0;
+- branch not archived;
+- no remaining Procedure draft;
+- branch not behind Main and at least one published change ahead;
+- exact V2 Operator fingerprint;
+- unchanged Technician fingerprint;
+- unchanged conversation config and platform settings;
+- unchanged confirmed-intake Client Tool contract;
+- compiled workflow movement only inside the Operator Procedure namespace;
+- no Technician compiled-workflow movement;
+- isolated version advanced from Main.
+
+Merge preview is GET-only and must return:
 
 ```text
-STOP
-→ Albert reviews exact sanitized write-set
-→ separate authorization required before first provider POST/PATCH
+force = false
+conflicts = []
+overridden_fields = []
+preview target state = exact verified isolated source state
+```
+
+Main is re-read before and after preview and must remain the exact accepted
+Gate-2 baseline. The isolated branch is also re-read after preview and must
+remain unchanged.
+
+## 9. Exact stop for the current authorization
+
+Current authorization:
+
+```text
+repository-side executor
++ isolated provider branch at 0% live
++ exact Operator V2 draft
++ isolated publish
++ exact readback
++ GET merge-preview force=false
+```
+
+Explicitly not authorized:
+
+```text
+provider Main merge
+repository Ready
+repository merge
+Gate-3 conversation retry
+Supabase / SQL / RLS / RPC / Auth
+Production
+lifecycle mutation
+```
+
+Successful executor evidence must stop at:
+
+```text
+STOP_FOR_ALBERT_PROVIDER_MAIN_MERGE_AUTHORIZATION
 ```
 
 No canonical-state update required.
 
-The correction does not change BODYSHOP architecture, catalog ownership, persistence, security boundary or domain authority. It only strengthens provider-side adherence to an already-canonical field separation.
+The correction does not change BODYSHOP architecture, catalog ownership,
+persistence, security boundary or domain authority. It only strengthens
+provider-side adherence to an already-canonical field separation.
