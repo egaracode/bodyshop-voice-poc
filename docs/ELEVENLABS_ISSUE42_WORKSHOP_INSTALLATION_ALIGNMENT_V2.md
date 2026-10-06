@@ -4,12 +4,14 @@
 
 ```text
 PARENT_VERTICAL: AI-Control-Workshop#432
-PAUSED_RUNTIME_CHILD: AI-Control-Workshop#442
-ACTIVE_CORRECTIVE_CHILD: bodyshop-voice-poc#42
+RUNTIME_CHILD_AFFECTED: AI-Control-Workshop#442
+CORRECTIVE_ISSUE: bodyshop-voice-poc#42
 TARGET_GATE: Gate 3 — Development runtime validated
-PROVIDER_WRITE: NOT AUTHORIZED
-PROVIDER_MAIN_MERGE: NOT AUTHORIZED
-SUPABASE / PRODUCTION / LIFECYCLE: FORBIDDEN
+PROVIDER_STAGING_RESULT: COMPLETED / VERIFIED
+PROVIDER_MAIN_RESULT: MERGED / POST-MERGE VERIFIED
+REPOSITORY_READY / MERGE: ALBERT DECISION REQUIRED
+GATE3_RETRY: SEPARATE ALBERT AUTHORIZATION REQUIRED
+SUPABASE / PRODUCTION / LIFECYCLE: OUT OF SCOPE / UNTOUCHED
 ```
 
 This document records the provider-adapter correction needed after a real Gate-3 spoken conversation demonstrated that ElevenLabs did not collect the canonical BODYSHOP workshop separately from installation.
@@ -291,7 +293,7 @@ provider operations 1–6 only:
 6. GET merge-preview into Main with force=false
 ```
 
-Provider Main merge remains explicitly unauthorized.
+At that staging boundary, provider Main merge remained explicitly unauthorized.
 
 The bounded executor is:
 
@@ -409,16 +411,16 @@ Post-merge GET-only verification requires:
 
 ## 10. Exact stop after provider Main merge
 
-Current authorization does **not** include repository Ready/merge or Gate-3
-runtime retry.
+At the close of the provider Main merge block, authorization did **not** include
+repository Ready/merge or Gate-3 runtime retry.
 
-Successful provider Main merge evidence must stop at:
+The required stop after successful provider Main merge evidence was:
 
 ```text
 STOP_FOR_POST_MERGE_AUDIT_AND_ALBERT_REPOSITORY_DECISION
 ```
 
-Explicitly still not authorized:
+The provider Main merge block explicitly excluded:
 
 ```text
 repository Ready
