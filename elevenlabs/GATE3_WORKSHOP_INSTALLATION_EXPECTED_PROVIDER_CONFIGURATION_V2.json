@@ -24,7 +24,7 @@
     "name": "bodyshop_resolve_confirmed_intake",
     "expects_response": true,
     "config_path": "elevenlabs/CONFIRMED_INTAKE_CLIENT_TOOL_V1.json",
-    "effective_tool_set_policy": "exactly_this_tool"
+    "effective_tool_set_policy": "exactly_this_tool_on_isolated_branch"
   },
   "operator_procedure": {
     "name": "Operator breakdown",
