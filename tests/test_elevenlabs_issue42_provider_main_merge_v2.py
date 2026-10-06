@@ -404,8 +404,11 @@ class Issue42ProviderMainMergeV2Tests(unittest.TestCase):
             expected_target["content_sha256"],
             evidence["post_merge"]["operator"]["content_sha256"],
         )
+        expected_technician = merge42.staging42._fingerprint(
+            fake.technician
+        )
         self.assertEqual(
-            "c8238704959494ea15c8e7897cd4b18420b23b99a56a8ad4236662f1f180fae2",
+            expected_technician["content_sha256"],
             evidence["post_merge"]["technician"]["content_sha256"],
         )
         self.assertFalse(evidence["repository_ready_authorized"])
