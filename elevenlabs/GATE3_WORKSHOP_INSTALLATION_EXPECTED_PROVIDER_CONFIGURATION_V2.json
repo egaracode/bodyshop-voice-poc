@@ -1,0 +1,125 @@
+{
+  "schema_version": 2,
+  "authority": {
+    "name": "GATE3_WORKSHOP_INSTALLATION_EXPECTED_PROVIDER_CONFIGURATION_V2",
+    "parent_vertical": "AI-Control-Workshop#432",
+    "issue": 42,
+    "extends_without_rewriting": "GATE2_CLIENT_TOOL_EXPECTED_PROVIDER_CONFIGURATION_V1",
+    "canonical_domain_authority": "AI-Control-Workshop Reference Object Catalog V1 + Voice Domain Adapter V1",
+    "client_tool_contract": "CONFIRMED_INTAKE_CLIENT_TOOL_V1"
+  },
+  "retained_from_gate2_v1": [
+    "agent.name",
+    "agent.language",
+    "agent.system_prompt",
+    "agent.llm",
+    "agent.voice",
+    "agent.dynamic_variable_names",
+    "client_tool",
+    "Technician pre-close",
+    "operator trigger",
+    "operator step order except strengthened workshop/install instructions"
+  ],
+  "client_tool": {
+    "name": "bodyshop_resolve_confirmed_intake",
+    "expects_response": true,
+    "config_path": "elevenlabs/CONFIRMED_INTAKE_CLIENT_TOOL_V1.json",
+    "effective_tool_set_policy": "exactly_this_tool_on_isolated_branch"
+  },
+  "operator_procedure": {
+    "name": "Operator breakdown",
+    "type": "deterministic",
+    "trigger": "When the caller is an operator in an active AI Control session reporting or preparing to report a breakdown.",
+    "content_template": {
+      "steps": [
+        {
+          "type": "ask",
+          "instruction": "Ask for the operator's full identity: name and at least one surname. Do not advance until it is clear enough to rely on."
+        },
+        {
+          "type": "ask",
+          "instruction": "Ask exactly: ¿De qué taller BODYSHOP llamas? This required field is the top-level BODYSHOP workshop/Taller context. It is not the installation, production area, operation or equipment. An installation or production-area answer does not satisfy this step. Do not advance until the operator gives a clear workshop/Taller value."
+        },
+        {
+          "type": "ask",
+          "instruction": "Ask exactly: ¿De qué modelo llamas? Retain a clear model already provided and do not ask it again."
+        },
+        {
+          "type": "ask",
+          "instruction": "Ask exactly: ¿Qué instalación? This required field is the installation within the already confirmed workshop/model context. Installation is distinct from workshop/Taller. Do not reuse, reinterpret or copy the workshop answer as the installation. Do not advance until the operator gives a clear installation value."
+        },
+        {
+          "type": "ask",
+          "instruction": "Ask exactly: ¿Qué operación tiene la avería? Require the operation/station/process reference; do not silently treat machine activity or the problem description as the operation."
+        },
+        {
+          "type": "ask",
+          "instruction": "Ask exactly: ¿Qué elemento o dispositivo tiene la avería? Identify the affected physical device."
+        },
+        {
+          "type": "branch",
+          "branches": [
+            {
+              "condition": {
+                "type": "llm",
+                "condition": "The affected device has an applicable subdevice or exact individual element reference and that value is not yet clear."
+              },
+              "steps": [
+                {
+                  "type": "ask",
+                  "instruction": "Ask only for the affected subdevice or exact individual element reference. Do not invent or universally require a subdevice when none is applicable."
+                }
+              ]
+            }
+          ],
+          "fallback": [
+            {
+              "type": "tell",
+              "instruction": "Continue without inventing or requiring a subdevice when no subdevice is applicable."
+            }
+          ]
+        },
+        {
+          "type": "ask",
+          "instruction": "Ask exactly: ¿Qué problema o avería tiene? An observable symptom is sufficient; do not require a root-cause diagnosis."
+        },
+        {
+          "type": "ask",
+          "instruction": "Ask exactly: ¿La línea está parada? Require an unambiguous yes or no before continuing."
+        },
+        {
+          "type": "ask",
+          "instruction": "Read back the complete understood intake: workshop, model, installation, operation, device, subdevice when applicable, problem description and whether the line is stopped. Ask ¿Es correcto? This step is complete only after explicit operator confirmation. If the operator corrects or questions any value, clarify only the corrected or uncertain value, then repeat the complete read-back and ask for explicit confirmation again. Do not treat silence, ambiguity or a partial answer as confirmation."
+        },
+        {
+          "type": "tool_call",
+          "tool_ref": "bodyshop_resolve_confirmed_intake",
+          "instruction": "Call BODYSHOP resolution using only the values in the operator-confirmed read-back. Pass workshop, model, installation, operation, device, optional subdevice, description and line_stopped exactly from the confirmed intake. Do not invent, infer or add operational values.",
+          "on_failure": {
+            "fallback": [
+              {
+                "type": "tell",
+                "instruction": "Explain that BODYSHOP resolution could not be obtained, that no operational action was performed, and that the intake must remain unregistered."
+              }
+            ]
+          }
+        },
+        {
+          "type": "tell",
+          "instruction": "Use only the BODYSHOP Client Tool result. If status is RESOLVED, report the returned canonical display context and state that this is a Development resolution only with no breakdown creation or operational mutation. If status is INCOMPLETE, AMBIGUOUS, NOT_FOUND or INVALID, report that BODYSHOP did not resolve the intake, ask only for the missing or uncertain clarification identified by the result, and never fabricate a reference, resolution or operational action."
+        }
+      ]
+    }
+  },
+  "runtime_risk": {
+    "structured_procedures_release_status": "ALPHA",
+    "llm": "qwen35-397b-a17b",
+    "forced_tool_behavior": "EVIDENCE_REQUIRED_IN_GATE_3"
+  },
+  "provider_staging": {
+    "branch_name": "bodyshop-workshop-installation-issue-42",
+    "branch_description": "BODYSHOP #42 workshop/install semantic alignment staging",
+    "required_live_percentage": 0,
+    "provider_main_merge_authorized": false
+  }
+}
