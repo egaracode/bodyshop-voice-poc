@@ -118,7 +118,25 @@ class FakeProvider:
     def list_branches(self, agent_id, include_archived=False):
         if not self.branch_exists:
             return {"results": []}
-        return {"results": [self.get_branch(agent_id, self.branch_id)]}
+        return {
+            "results": [
+                {
+                    "id": self.branch_id,
+                    "name": stage.BRANCH_NAME,
+                    "agent_id": self.agent_id,
+                    "description": stage.BRANCH_DESCRIPTION,
+                    "current_live_percentage": 0,
+                    "parent_branch_id": self.main_branch_id,
+                    "draft_exists": self.draft is not None and not self.published,
+                    "draft_created_at": 1 if self.draft is not None else None,
+                    "draft_is_behind_tip": False,
+                    "is_archived": False,
+                    "commits_ahead": 1 if self.published else 0,
+                    "commits_behind": 0,
+                    "merged_into_branch_id": None,
+                }
+            ]
+        }
 
     def create_isolated_branch(self, agent_id, *, parent_version_id):
         self.calls.append(("POST_BRANCH", agent_id, parent_version_id))
@@ -129,16 +147,26 @@ class FakeProvider:
         }
 
     def get_branch(self, agent_id, branch_id):
+        # Match the documented single-branch GET schema: commit divergence and
+        # draft_exists belong to the branch LIST surface, not this response.
         return {
             "id": self.branch_id,
             "name": stage.BRANCH_NAME,
+            "agent_id": self.agent_id,
             "description": stage.BRANCH_DESCRIPTION,
-            "parent_branch": {"id": self.main_branch_id, "name": "Main"},
-            "current_live_percentage": 0,
+            "created_at": 1,
+            "last_committed_at": 2 if self.published else 1,
             "is_archived": False,
-            "draft_exists": self.draft is not None and not self.published,
-            "commits_ahead": 1 if self.published else 0,
-            "commits_behind": 0,
+            "current_live_percentage": 0,
+            "parent_branch": {"id": self.main_branch_id, "name": "Main"},
+            "most_recent_versions": [
+                {
+                    "id": "branchversion2_RAW" if self.published else "branchversion0_RAW",
+                    "agent_id": self.agent_id,
+                    "branch_id": self.branch_id,
+                    "seq_no_in_branch": 2 if self.published else 1,
+                }
+            ],
         }
 
     def get_agent(self, agent_id, branch_id=None):
@@ -273,6 +301,24 @@ class Issue42ProviderStagingTests(unittest.TestCase):
                 "/v1/convai/agents/a/branches/b",
                 body={},
             )
+
+    def test_combined_branch_state_uses_list_only_commit_and_draft_fields(self):
+        fake = FakeProvider(self.v1, self.v2, self.tool, existing_target=True)
+
+        detail = fake.get_branch(fake.agent_id, fake.branch_id)
+        self.assertNotIn("draft_exists", detail)
+        self.assertNotIn("commits_ahead", detail)
+        self.assertNotIn("commits_behind", detail)
+
+        combined = stage._combined_branch_state(
+            fake,
+            fake.agent_id,
+            fake.branch_id,
+        )
+        self.assertFalse(combined["draft_exists"])
+        self.assertEqual(1, combined["commits_ahead"])
+        self.assertEqual(0, combined["commits_behind"])
+        self.assertEqual(fake.main_branch_id, combined["parent_branch_id"])
 
     def test_branch_guard_rejects_live_archived_behind_and_no_ahead(self):
         baseline = {
