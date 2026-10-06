@@ -312,6 +312,71 @@ def _verify_branch_meta(
         )
 
 
+def _branch_status_by_id(
+    client: Issue42ProviderClient,
+    agent_id: str,
+    branch_id: str,
+) -> dict[str, Any]:
+    """Read branch-list status fields with include_commit_status=true.
+
+    ElevenLabs exposes draft_exists / commits_ahead / commits_behind on the
+    branch LIST surface, not on GET /branches/{branch_id}. Keep those schemas
+    separate and fail closed if the branch is not found exactly once.
+    """
+    results = client.list_branches(agent_id, include_archived=True).get("results", [])
+    if not isinstance(results, list):
+        raise Issue42StagingError("Branch listing omitted results")
+    matches = [
+        row
+        for row in results
+        if isinstance(row, dict) and row.get("id") == branch_id
+    ]
+    if len(matches) != 1:
+        raise Issue42StagingError(
+            "Target branch status was not found exactly once in branch listing"
+        )
+    return matches[0]
+
+
+def _combined_branch_state(
+    client: Issue42ProviderClient,
+    agent_id: str,
+    branch_id: str,
+) -> dict[str, Any]:
+    """Combine documented single-branch detail with list-only status fields."""
+    detail = client.get_branch(agent_id, branch_id)
+    summary = _branch_status_by_id(client, agent_id, branch_id)
+
+    for field in (
+        "name",
+        "description",
+        "current_live_percentage",
+        "is_archived",
+    ):
+        if summary.get(field) != detail.get(field):
+            raise Issue42StagingError(
+                f"Branch detail/list disagreement at {field}"
+            )
+
+    detail_parent = _parent_branch_id(detail)
+    summary_parent = summary.get("parent_branch_id")
+    if detail_parent != summary_parent:
+        raise Issue42StagingError("Branch detail/list parent disagreement")
+
+    combined = dict(detail)
+    for field in (
+        "parent_branch_id",
+        "draft_exists",
+        "draft_created_at",
+        "draft_is_behind_tip",
+        "commits_ahead",
+        "commits_behind",
+        "merged_into_branch_id",
+    ):
+        combined[field] = summary.get(field)
+    return combined
+
+
 def _find_target_branch(
     client: Issue42ProviderClient,
     agent_id: str,
@@ -430,7 +495,7 @@ def _verify_published_branch(
     main_branch_id = raw["main_branch_id"]
     tool_id = raw["tool_id"]
 
-    branch = client.get_branch(agent_id, branch_id)
+    branch = _combined_branch_state(client, agent_id, branch_id)
     _verify_branch_meta(
         branch,
         main_branch_id=main_branch_id,
@@ -625,7 +690,7 @@ def execute_authorized_staging(
         if not isinstance(branch_id, str) or not branch_id:
             raise Issue42StagingError("Existing target branch omitted id")
 
-    branch = client.get_branch(agent_id, branch_id)
+    branch = _combined_branch_state(client, agent_id, branch_id)
     branch_agent = client.get_agent(agent_id, branch_id)
     _verify_static_retention(main_agent, branch_agent)
 
