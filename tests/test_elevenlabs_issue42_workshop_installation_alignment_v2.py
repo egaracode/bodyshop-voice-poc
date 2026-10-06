@@ -102,14 +102,35 @@ class Issue42WorkshopInstallationAlignmentV2Tests(unittest.TestCase):
 
     def test_readback_and_tool_call_still_require_both_fields(self):
         steps = self.v2["operator_procedure"]["content_template"]["steps"]
-        readback = steps[8]["instruction"]
-        tool_call = steps[9]["instruction"]
+
+        readbacks = [
+            step
+            for step in steps
+            if step.get("type") == "ask"
+            and str(step.get("instruction", "")).startswith(
+                "Read back the complete understood intake:"
+            )
+        ]
+        tool_calls = [
+            step
+            for step in steps
+            if step.get("type") == "tool_call"
+        ]
+
+        self.assertEqual(1, len(readbacks))
+        self.assertEqual(1, len(tool_calls))
+
+        readback = readbacks[0]["instruction"]
+        tool_call = tool_calls[0]
+
         self.assertIn("workshop, model, installation", readback)
-        self.assertIn("workshop, model, installation", tool_call)
-        self.assertEqual("tool_call", steps[9]["type"])
+        self.assertIn(
+            "workshop, model, installation",
+            tool_call["instruction"],
+        )
         self.assertEqual(
             "bodyshop_resolve_confirmed_intake",
-            steps[9]["tool_ref"],
+            tool_call["tool_ref"],
         )
 
     def test_network_client_exposes_get_only(self):
