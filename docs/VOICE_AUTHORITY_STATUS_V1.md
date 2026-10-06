@@ -202,6 +202,8 @@ Before reuse, revalidate them against current first-party documentation and curr
 
 This repository-level status document does not certify old external-provider statements as current.
 
+Historical bodies must also retain their time-bound provider-maturity wording. Do not rewrite an old statement such as a historical feature classification merely to match today's provider documentation; instead, preserve the statement as provenance and obtain the current classification from the MASTER/current first-party source set when needed.
+
 ## 8. Sources / roadmaps / handoffs
 
 User-provided Sources, PDFs, roadmaps and handoffs are supporting context and provenance.
